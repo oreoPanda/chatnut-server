@@ -1,6 +1,6 @@
 #Makefile
 
-objects = chatnut-server.o getch.o registration.o socketlayer.o
+objects = chatnut-server.o getch.o users.o socketlayer.o
 cflags = -Wall -Wextra -std=c99
 
 chatnut-server: $(objects)
