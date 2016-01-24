@@ -136,7 +136,7 @@ int TCP_send( socket_t *sock, char indicator, const char *data )
 		print_socket_error( "Error sending data: ", FALSE );
 		print_socket_error( strerror(errno), TRUE );
 	}
-	else if( return_val != (1+strlen(data)) )
+	else if( (unsigned)return_val != (1+strlen(data)) )
 	{
 		print_socket_error( "Not all data was sent: ", FALSE );
 		print_socket_error( strerror(errno), TRUE );
