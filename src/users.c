@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>   //for mkdir()
 
 #include "messaging.h"
 #include "users.h"
@@ -16,25 +17,38 @@ char **passwords = NULL;
 
 /*WARNING: This code uses text passwords, no hashing involved :D	
 	(for C++ look at libcryptopp), maybe try glib hashing for C*/
+
+extern int init_server_directory(void)
+{
+    if( chdir(getenv("HOME")) != 0 )
+    {
+        fprintf( stderr, "Error switching into your home directory: %s\n", strerror(errno) );
+        return 1;
+    }
+    if( mkdir( ".chatnut-server", 0755 ) != 0 )
+    {
+        if( errno != EEXIST )
+        {
+            fprintf( stderr, "Error creating directory .chatnut-server in your home directory: %s\n", strerror(errno) );
+            return 1;
+        }
+    }
+    if( chdir(".chatnut-server") != 0 )
+    {
+        fprintf( stderr, "Error switching to .chatnut-server in your home directory: %s\n", strerror(errno) );
+        return 1;
+    }
+    
+    return 0;
+}
  
 /*This function loads username and passwords of all registered users into char **usernames and char **passwords*/
 //TODO check and debug
 static int load_all_users(void)
 {
     int file_length = 0;
-    char *path = NULL;
-    int pathlen = 0;
-    char *homedir = getenv("HOME");
 
-    pathlen = strlen(homedir) + 1 + strlen(".message_server") + 1 + strlen(USERFILE) + 1;
-    path = calloc( pathlen, sizeof(char) );//1 = '/' || NULL
-    strncpy( path, homedir, strlen(homedir) + 1 );
-    strncat( path, "/", 1 );
-    strncat( path, ".message_server", 15 );
-    strncat( path, "/", 1 );
-    strncat( path, USERFILE, strlen(USERFILE) );
-
-    userlist = fopen( path, "r" );
+    userlist = fopen( USERFILE, "r" );
     if( userlist == NULL )
     {
         perror(""); //prints error message associated to last errno
