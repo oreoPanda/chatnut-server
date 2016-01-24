@@ -16,7 +16,7 @@ char **passwords = NULL;
 
 /*WARNING: This code uses text passwords, no hashing involved :D	
 	(for C++ look at libcryptopp), maybe try glib hashing for C*/
-
+ 
 /*This function loads username and passwords of all registered users into char **usernames and char **passwords*/
 //TODO check and debug
 static int load_all_users(void)
