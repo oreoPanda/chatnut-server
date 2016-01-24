@@ -3,16 +3,12 @@
 /*http://beej.us/guide/bgnet/output/html/multipage/advanced.html#blocking*/
 /*for a great starters select() tutorial*/
 
+#include <stdlib.h>
+
 #include "messaging.h"
 #include "server.h"
-
-//TODO does this server need to be available for windows?
-#ifdef _WIN32
-    #include "socketprx.h"
-#else
-    #include "getch.h"
-    #include "socketprx.h"
-#endif
+#include "getch.h"
+#include "socketprx.h"
 
 //FIXME check that all error_exit points lead to clean exits, not connection-breaks
 //FIXME check if FD_SET and other functions need error checks that I haven't done yet
