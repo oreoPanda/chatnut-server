@@ -24,6 +24,7 @@ chatnut-server-debug: $(objects-debug)
 clean:
 	echo "Removing executable"
 	rm -f chatnut-server
+	rm -f chatnut-server-debug
 	echo "Removing objects"
 	rm -f *.o
 	echo "Removing temporary files created by gedit"

@@ -3,6 +3,7 @@
 
 # Executable
 src/chatnut-server
+src/chatnut-server-debug
 
 # NetBeans data folder
 data/
