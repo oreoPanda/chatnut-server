@@ -9,8 +9,6 @@
 #include "users.h"
 
 //FIXME check if FD_SET and other functions need error checks that I haven't done yet
-//TODO check if empty messages crash the server, this is technically possible due to the way the server checks for\
- disconnected clients (by select() and a 0 returned from read() )	FIXME empty messages can't be sent, or? :D
 //TODO this server can recognize closed connections but I'm not sure about broken connections
 //TODO check for too many arguments? (especially /who)
 
@@ -124,41 +122,43 @@ struct buddy *add_buddy( struct client *client )
 //FIXME make sure no clients with open sockets get deleted (close them before this function)
 struct client *delete_client(struct client *toDelete)
 {
-	struct client *pointer = NULL;
+    struct client *pointer = NULL;
 
-	if(start)
-	{
-		if( start == toDelete )	 //first element is supposed to be deleted
-		{
-			printf( "(delete_client)Deleting first client.\n" );
-			pointer = start->next;	  //works even when start->next = NULL, because then the new start is just NULL
-			free(start);
-			start = pointer;	//set start equal to the new start element
-			return pointer;	   //return new first element (start or NULL)
-		}
-		else
-		{
-			struct client *nextPointer = NULL;
+    if(start)
+    {
+        if( start == toDelete )	 //first element is supposed to be deleted
+        {
+            printf( "(delete_client)Deleting first client.\n" );
+            pointer = start->next;	  //works even when start->next = NULL, because then the new start is just NULL
+            free(start);
+            start = pointer;	//set start equal to the new start element
+            return pointer;	   //return new first element (start or NULL)
+        }
+        else
+        {
+            struct client *nextPointer = NULL;
 
-			pointer = start;
-			while( pointer->next != NULL )  //only if there are elements behind this
-			{
-				nextPointer = pointer->next;	//pointer will point to one element, nextPointer to the one behind it
-				if( nextPointer	== toDelete	)//nextPointer can be deleted, pointer will be returned (the element in front of deleted one)
-				{
-					printf( "(delete_client)Deleting client.\n" );
-					pointer->next = nextPointer->next;//bridge past nextPointer, could make next element of pointer NULL (last elem. found)
-					free(nextPointer);
-					return pointer->next;	//return the element behind the deleted one (nextPointer was deleted, so this could either be another client or NULL)
-				}
-				pointer = nextPointer;
-			}
-		}
-	}
-	else
-	{
-		return NULL;
-	}
+            pointer = start;
+            while( pointer->next != NULL )  //only if there are elements behind this
+            {
+                nextPointer = pointer->next;	//pointer will point to one element, nextPointer to the one behind it
+                if( nextPointer	== toDelete	)//nextPointer can be deleted, pointer will be returned (the element in front of deleted one)
+                {
+                    printf( "(delete_client)Deleting client.\n" );
+                    pointer->next = nextPointer->next;//bridge past nextPointer, could make next element of pointer NULL (last elem. found)
+                    free(nextPointer);
+                    return pointer->next;	//return the element behind the deleted one (nextPointer was deleted, so this could either be another client or NULL)
+                }
+                pointer = nextPointer;
+            }
+            fprintf( stderr, "ERROR: No client found to delete!\n" );
+            return NULL;
+        }
+    }
+    else
+    {
+        return NULL;
+    }
 }
 
 /*this function deletes all buddy objects of a client*/
@@ -335,9 +335,9 @@ commandreply eval_cmd( char *completeCommand, struct client *client, char **data
 		delete_buddies( client, client->buddy );
 		client->buddy = NULL;
 
-		return BUDDY_IS_UNSET;	//TODO this might not be the best idea (when it still returned BUDDY_IS_SET\
-								HAHAHAHAHA thanks j3f took me an hour to find out why pending_action_data was freed twice\
-								(/unwho and /who)
+		return BUDDY_IS_UNSET;	//TODO this might not be the best idea (when it still returned BUDDY_IS_SET
+                                            //HAHAHAHAHA thanks j3f took me an hour to find out why pending_action_data
+                                            //was freed twice (/unwho and /who)
 	}
 
 	//login command
@@ -623,72 +623,72 @@ int handle_once( struct client *client )
 
 int main(void)
 {
-	socket_t hostSock;
-	struct client *client = NULL;
-	
-	/*create a TCP socket*/
-	if( (hostSock = create_socket( PF_INET, SOCK_STREAM, 0 )) >= 0 )
-	{
-		if( bind_socket( &hostSock, INADDR_ANY, 1234 ) == SUCCESS &&
-			listen_socket(&hostSock) == SUCCESS )
-		{
+    socket_t hostSock;
+    struct client *client = NULL;
 
-			/*main loop, handles connections and messaging*/
-			client = start;
-			do
-			{
-				if( client == NULL )   //empty, check for connection to fill it
-				{
-					if( check_incoming( &hostSock ) == SUCCESS )
-					{
-						/*fill with connection*/
-						client = add_client();
-						if(client)
-						{
-							accept_socket( &hostSock, &client->sock );
-							printf( "(main)Fully established connection to a new client!\n");
-							TCP_send( &client->sock, CONNECTED, conn_msg );
-							client = client->next;
-						}
-						continue;
-					}
-					else
-					{
-						client = start; //end of list was reached and could not be filled, so next time the while loop will start over again
-						continue;	   //element is empty and could not be filled
-					}
-				}
-				else		//client element is not NULL
-				{
-					/*handle client, if it left delete it. Go on with next client*/
-					if( handle_once(client) == FAILURE )
-					{
-						delete_buddy_references_to(client);
-						client = delete_client(client);	 //delete_client returns pointer to client behind deleted one
-					}
-					else
-					{
-						client = client->next;
-					}
-				}
-			}
-			while( getch() != 'q' );	//do one action with one client, then check this again
+    /*create a TCP socket*/
+    if( (hostSock = create_socket( PF_INET, SOCK_STREAM, 0 )) >= 0 )
+    {
+        if( bind_socket( &hostSock, INADDR_ANY, 1234 ) == SUCCESS &&
+                listen_socket(&hostSock) == SUCCESS )
+        {
+            /*main loop, handles connections and messaging*/
+            init_server_directory();
+            client = start;
+            do
+            {
+                if( client == NULL )   //empty, check for connection to fill it
+                {
+                    if( check_incoming( &hostSock ) == SUCCESS )
+                    {
+                        /*fill with connection*/
+                        client = add_client();
+                        if(client)
+                        {
+                            accept_socket( &hostSock, &client->sock );
+                            printf( "(main)Fully established connection to a new client!\n");
+                            TCP_send( &client->sock, CONNECTED, conn_msg );
+                            client = client->next;
+                        }
+                        continue;
+                    }
+                    else
+                    {
+                        client = start; //end of list was reached and could not be filled, so next time the while loop will start over again
+                        continue;	   //element is empty and could not be filled
+                    }
+                }
+                else		//client element is not NULL
+                {
+                    /*handle client, if it left delete it. Go on with next client*/
+                    if( handle_once(client) == FAILURE )
+                    {
+                        delete_buddy_references_to(client);
+                        client = delete_client(client);	 //delete_client returns pointer to client behind deleted one
+                    }
+                    else
+                    {
+                        client = client->next;
+                    }
+                }
+            }
+            while( getch() != 'q' );	//do one action with one client, then check this again
 
-			/*upon quitting*/
-			//delete clients and buddy references
-			client = start;
-			while(client)
-			{
-				delete_buddy_references_to(client);
-				client = delete_client(client);	 //delete_client again returns pointer to client behind deleted one
-				if(client)
-				{
-					client = client->next;
-				}
-			}
-		}
-		close_socket(&hostSock);
-	}
+            /*upon quitting*/
+            //delete clients and buddy references
+            client = start;
+            while(client)
+            {
+                delete_buddy_references_to(client);
+                client = delete_client(client);	 //delete_client again returns pointer to client behind deleted one
+                if(client)
+                {
+                    client = client->next;
+                }
+            }
+        }
+        close_socket(&hostSock);
+    }
 
-	return 0;
+    return 0;
 }
