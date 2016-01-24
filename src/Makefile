@@ -11,7 +11,7 @@ chatnut-server: $(objects)
 
 chatnut-server-debug: $(objects-debug)
 	echo "Linking "$(objects-debug)
-	gcc $(objects) -o $@ $(libs)
+	gcc $(objects-debug) -o $@ $(libs)
 
 %.o: %.c
 	echo "Compiling "$<
