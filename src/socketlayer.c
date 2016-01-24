@@ -1,19 +1,24 @@
 /*socketlayer.c - for UNIX*/
 
 #include "socketprx.h"
+#include <math.h>
 
-extern void reset_timeout(struct timeval *timeout)
+void reset_timeout(struct timeval *timeout)
 {
 	timeout->tv_sec = 0;
 	timeout->tv_usec = 10,000; //microseconds: 1,000,000 of them each second, here process will sleep for one 100th of a second
 }
 
-/*exit with custom error message*/
-void error_exit(char *error_message)
+/*print an error*/
+void print_socket_error( char *error_message, boolean newline )
 {
-	fprintf( stderr, "%s: %s\n", error_message, strerror(errno) );
+	fprintf( stderr, "%s", error_message );
+	if(newline)
+	{
+		fprintf( stderr, "\n" );
+	}
 
-	exit(EXIT_FAILURE);
+	return;
 }
 
 /*create a socket*/
@@ -25,7 +30,8 @@ int create_socket(int af, int type, int protocol)
 	sock = socket( af, type, protocol );
 	if( sock < 0 )		//check if it worked
 	{
-		error_exit("Error creating socket!");
+		print_socket_error( "Error creating socket: ", FALSE);
+		print_socket_error( strerror(errno), TRUE );
 	}
 	
 	setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(int) );//SO_REUSEADDR makes the socket not be unusable for two minutes after server closes
@@ -33,7 +39,7 @@ int create_socket(int af, int type, int protocol)
 	return sock;
 }
 
-void bind_socket(socket_t *sock, unsigned long address, unsigned short port)
+status bind_socket(socket_t *sock, unsigned long address, unsigned short port)
 {
 	struct sockaddr_in server;
 
@@ -45,59 +51,25 @@ void bind_socket(socket_t *sock, unsigned long address, unsigned short port)
 
 	if( bind( *sock, (struct sockaddr*)&server, sizeof(server) ) < 0 )
 	{
-		error_exit("Error binding socket to port!" );
+		print_socket_error( "Error binding socket to port: ", FALSE );
+		print_socket_error( strerror(errno), TRUE );
+		return FAILURE;
 	}
+
+	return SUCCESS;
 }
 
-void listen_socket(socket_t *sock)
+status listen_socket(socket_t *sock)
 {
 	if( listen(*sock, CLIENT_MAX) == -1)		//will set up queue with length CLIENT_MAX, kernel has a longer queue so more than CLIENT_MAX unconnected clients might be connect()ed successfully
 	{
-		error_exit("Error listening for connections!");
-	}
-}
-
-void connect_socket(socket_t *sock, char *server_addr, unsigned short port)
-{
-	struct sockaddr_in server;
-	struct hostent *host_info;
-	unsigned long ip_addr;
-
-	memset( &server, 0, sizeof(server) );	//fill structure with zeroes to erase false data
-
-	/*copy the ip address into the server address structure*/
-	ip_addr = inet_addr(server_addr);	//turn ip into unsigned long
-	if( ip_addr != INADDR_NONE )	//if it is a numeric ip
-	{
-		memcpy( (char*)&server.sin_addr, &ip_addr, sizeof(ip_addr) );//copy the unsigned long into the structure
-	}
-	else		//if it is a string address that needs to be resolved (like "localhost")
-	{
-		host_info = gethostbyname( server_addr );
-		if( host_info == NULL )		//if resolving didn't quite work
-		{
-			error_exit("Error resolving server address (unknown server)!");
-		}
-		else
-		{
-			#define h_addr h_addr_list[0]
-			memcpy( (char*)&server.sin_addr, host_info->h_addr, host_info->h_length );//copy the resolved address into structure
-		}
-	}
-
-	/*copy the protocol family and the port number into the structure*/
-	server.sin_family = AF_INET;
-	server.sin_port = htons(port);
-
-	/*connect to server and check if connecting worked*/
-	if( connect( *sock, (struct sockaddr*)&server, sizeof(server) ) < 0)
-	{
-		error_exit("Error connecting to server!");
+		print_socket_error( "Error listening for connections: ", FALSE );
+		print_socket_error( strerror(errno), TRUE );
+		return FAILURE;
 	}
 	else
 	{
-		//say who the client is connected to
-		printf( "Connected to server with address %s\n", inet_ntoa(server.sin_addr) );
+		return SUCCESS;
 	}
 }
 
@@ -105,7 +77,8 @@ void my_select( int numfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds
 {
 	if( select(numfds, readfds, writefds, exceptfds, timeout) == -1)//+1 was already done
 	{
-		error_exit("Error select()ing socket!");
+		print_socket_error( "Error select()ing socket: ", FALSE );
+		print_socket_error( strerror(errno), TRUE );
 	}
 }
 
@@ -119,12 +92,13 @@ void accept_socket( socket_t *sock, socket_t *new_sock )
 	*new_sock = accept( *sock, (struct sockaddr*)&client, &len );
 	if( *new_sock == -1 )	//if none found
 	{
-		error_exit("Error accepting connection!");
+		print_socket_error( "(accept_socket)Error accepting connection: ", FALSE );
+		print_socket_error( strerror(errno), TRUE );
 	}
 	else
 	{
 		/*say who the server is connected to*/
-		printf( "Connected to client with address %s\n", inet_ntoa(client.sin_addr) );
+		printf( "(accept_socket)Connected to client with address %s\n", inet_ntoa(client.sin_addr) );
 
 		/*char *msg = "hi\0";
 		int len = 3;
@@ -132,76 +106,145 @@ void accept_socket( socket_t *sock, socket_t *new_sock )
 	}
 }
 
-int TCP_send( socket_t *sock, const char *data, int len, int flags )
+int TCP_send( socket_t *sock, char indicator, const char *data )
 {
-	
 	int return_val;
-	return_val = send( *sock, data, len, flags );
+	char *to_send = NULL;
+
+	/*copy indicator, data and - if not already there - a '\n' to *to_send*/
+	if( data[strlen(data)-1] != '\n' )
+	{
+		to_send = calloc( strlen(data) + 2, sizeof(char) );	//indicator + strlen + '\n' (no '\0')
+		*to_send = indicator;
+		strncpy( to_send+1, data, strlen(data) );
+		to_send[strlen(data)+1] = '\n';
+		return_val = send( *sock, to_send, 1+strlen(data)+1, 0 );
+		free(to_send);
+	}
+	else
+	{
+		to_send = calloc( strlen(data) + 1, sizeof(char) );	//indicator + strlen (no '\0')
+		*to_send = indicator;
+		strncpy( to_send+1, data, strlen(data) );
+		return_val = send( *sock, to_send, 1+strlen(data), 0 );
+		free(to_send);
+	}
+
+	/*check*/
 	if( return_val == -1 )
 	{
-		fprintf( stderr, "Error sending data!: %s\n", strerror(errno));
-		return -1;
+		print_socket_error( "Error sending data: ", FALSE );
+		print_socket_error( strerror(errno), TRUE );
 	}
-	else if( return_val != len )
+	else if( return_val != (1+strlen(data)) )
 	{
-		fprintf( stderr, "Not all data was sent!: %s\n", strerror(errno) );
+		print_socket_error( "Not all data was sent: ", FALSE );
+		print_socket_error( strerror(errno), TRUE );
 	}
-	else if( return_val == len )
-	{
-		printf( "All data was sent!\n" );
-	}
-	return len;
+	return return_val;
 
 }
 
-int TCP_recv( socket_t *sock, char *data, int len, int flags, int *status )
+/*receives message. Length calculated is equal to strlen(message). one extra byte is added for termination, containing NULL*/
+int TCP_recv( socket_t *sock, char **data, status *readable )
 {
-	fd_set readfds;
-	struct timeval timeout;
-	int highestfd;
+	/*if readable pointer is NULL, do nothing*/
+	if( readable != NULL )
+	{
+		fd_set readfds;
+		struct timeval timeout;
+		int highestfd;
 
-	FD_ZERO( &readfds );
-	FD_SET( *sock, &readfds );
-
-	if( status != NULL )	//client gives a NULL to skip this part
-	{	
+		/*check if read would block*/
+		FD_ZERO( &readfds );
+		FD_SET( *sock, &readfds );
 		reset_timeout( &timeout );
 		highestfd = *sock;
-		printf( "inside TCP_recv, operation on sock %d, highestfd is %d\n", *sock, highestfd );
 		my_select( highestfd+1, &readfds, NULL, NULL, &timeout );
-	}
 
-	if( FD_ISSET( *sock, &readfds ) )	//only try to receive if a read won't block
-	{
-		*status = SUCCESS;
-		int return_val;
-		return_val = recv( *sock, data, len, flags );
-		if( return_val == -1 )
+		/*if read will not block, start the receiving action*/
+		if( FD_ISSET( *sock, &readfds ) )
 		{
-			fprintf( stderr, "Error receiving data!: %s\n", strerror(errno) );
+			int to_return;		//return value of recv() and this function
+			char *length_str = NULL;
+
+			*readable = SUCCESS;
+
+			/*receive first 4 bytes, which indicate message length as a character (example: "4323")*/
+			length_str = calloc( 4, sizeof(char) );
+			to_return = recv( *sock, length_str, 4, 0 );
+			printf("TCP_recv() length: %s\n", length_str );
+
+			/*error*/
+			if( to_return == -1 )
+			{
+				print_socket_error( "(TCP_recv)Error receiving length: ", FALSE );
+				print_socket_error( strerror(errno), TRUE );
+			}
+			/*client gone*/
+			else if( to_return == 0 )
+			{
+				print_socket_error( "(TCP_recv)Looks like the other end is gone: ", FALSE );
+				print_socket_error( strerror(errno), TRUE );
+			}
+			/*filled length_str*/
+			else
+			{
+				int length = 0;
+
+				/*calculate length of following message (example: turn "4323" into 4323)*/
+				double exponent = 3;
+				for( int i = 0; i < 4; i++ )
+				{
+					length += ( pow( 10, exponent ) * ( length_str[i] - 48 ) );
+					exponent--;
+				}
+
+				/*allocate enough space to save the message in*/
+				*data = calloc( length+1, sizeof(char) );
+
+				/*recv() actual message*/
+				to_return = recv( *sock, *data, length, 0 );
+				printf("TCP_recv() data: %s\n", *data );
+
+				/*error*/
+				if( to_return == -1 )
+				{
+					print_socket_error( "(TCP_recv)Error receiving data: ", FALSE );
+					print_socket_error( strerror(errno), TRUE );
+				}
+				/*client gone*/
+				else if( to_return == 0 )
+				{
+					print_socket_error( "(TCP_recv)Looks like the other end is gone: ", FALSE );
+					print_socket_error( strerror(errno), TRUE );
+				}
+				/* *data filled*/
+				else
+				{
+					*( *data + length ) = '\0';
+				}
+			}
+
+			return to_return;
 		}
-		else if( return_val == 0 )
+		/*read would block*/
+		else
 		{
-			fprintf( stderr, "Looks like the other end is gone!: %s\n", strerror(errno) );
+			*readable = FAILURE;
+			return -1;
 		}
+	}//end readable != NULL
 
-		return return_val;
-	}
-	*status = FAILURE;		//set status to FAILURE if read will block (no message available)
-	return FAILURE;		//I'm useless, will not be evaluated, only here to stop compiler warning "control reaches end of non-void function"
-}
-
-void cleanup(void)
-{
-	printf("Done cleaning up\n");
-	return;
+	print_socket_error( "(TCP_recv)Readable pointer is 0, not trying to receive.", TRUE );
+	return -1;		//nothing was done because readable pointer is not given
 }
 
 void close_socket( socket_t *sock )
 {
-	printf( "Trying to close socket %d\n", *sock );
 	if( close(*sock) != 0 )
 	{
-		fprintf( stderr, "Error closing socket!: %s\n", strerror(errno) );
+		print_socket_error( "Error closing socket: ", FALSE );
+		print_socket_error( strerror(errno), TRUE );
 	}
 }
