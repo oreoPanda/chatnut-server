@@ -2,10 +2,11 @@
 
 objects = chatnut-server.o getch.o users.o socketlayer.o
 cflags = -Wall -Wextra -std=c99
+libs = -lm
 
 chatnut-server: $(objects)
 	echo "Linking "$(objects)
-	gcc $(objects) -o $@
+	gcc $(objects) -o $@ $(libs)
 
 %.o: %.c
 	echo "Compiling "$<
