@@ -1,0 +1,21 @@
+# Object files
+*.o
+
+# Executable
+src/chatnut-server
+
+# NetBeans data folder
+data/
+
+# NetBeans project folder
+nbproject/
+
+# Eclipse folders
+.settings/
+
+# Eclipse project files
+.cproject
+.project
+
+# gedit backup files
+*~
