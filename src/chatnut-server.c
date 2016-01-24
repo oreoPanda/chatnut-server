@@ -16,8 +16,6 @@
 
 //FIXME check that all error_exit points lead to clean exits, not connection-breaks
 //FIXME check if FD_SET and other functions need error checks that I haven't done yet
-//TODO check if empty messages crash the server, this is technically possible due to the way the server checks for\
- disconnected clients (by select() and a 0 returned from read() )	FIXME empty messages can't be sent, or? :D
 //TODO this server can recognize closed connections but I'm not sure about broken connections
 //TODO check for too many arguments? (especially /who)
 
@@ -230,12 +228,12 @@ int eval_cmd( char *completeCommand, struct client *client )
 {
     char *command = strtok( completeCommand, " " );//cut off command
     printf( "COMMAND: %s\n", command );
-    char argc = 0;
+    int argc = 0;
     char **argv = NULL;
 
     //TODO this is totally unclear...
     char *arg = NULL;
-    while( arg = strtok( NULL, " " ) ) //cut off one argument at a time
+    while( (arg = strtok( NULL, " " )) ) //cut off one argument at a time
     {
         printf( "Found an(other) argument.\n" );
         argv = realloc( argv, argc+1*sizeof(char *) );
