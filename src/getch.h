@@ -4,5 +4,5 @@
 #include <termios.h>		//for setting terminal flags
 #include <unistd.h>
 
-int cbreak(int fd);
-int getch(void);
+extern int cbreak(int fd);
+extern int getch(void);
