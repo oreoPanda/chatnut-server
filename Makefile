@@ -6,6 +6,9 @@ all:
 default:
 	cd src && make --quiet chatnut-server
 
+debug:
+	cd src && make --quiet chatnut-server-debug
+
 clean:
 	rm -f *~
 	rm -f .*~
