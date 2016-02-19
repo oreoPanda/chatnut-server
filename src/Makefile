@@ -1,25 +1,26 @@
 #Makefile
 
-objects-debug = chatnut-server-debug.o getch-debug.o users-debug.o socketlayer-debug.o
-objects = chatnut-server.o getch.o users.o socketlayer.o
-cflags = -Wall -Wextra -std=c99
-libs = -lm
+objects-debug = Action-debug.o Buddy-debug.o chatnut-server-debug.o Client-debug.o Command-debug.o\
+				Getch-debug.o helpers-debug.o Horst-debug.o Message-debug.o Storage-debug.o
+objects = Action.o Buddy.o chatnut-server.o Client.o Command.o Getch.o helpers.o Horst.o Message.o Storage.o
+compiler = g++
+cflags = -Wall -Wextra -std=c++0x
 
 chatnut-server: $(objects)
 	echo "Linking "$(objects)
-	gcc $(objects) -o $@ $(libs)
+	$(compiler) $(objects) -o $@ $(libs)
 
 chatnut-server-debug: $(objects-debug)
 	echo "Linking "$(objects-debug)
-	gcc $(objects-debug) -o $@ $(libs)
+	$(compiler) $(objects-debug) -o $@ $(libs)
 
-%.o: %.c
+%.o: %.cpp
 	echo "Compiling "$<
-	gcc -c $< -o $@ $(cflags)
+	$(compiler) -c $< -o $@ $(cflags)
 
-%-debug.o: %.c
+%-debug.o: %.cpp
 	echo "Compiling "$<" with debugging information"
-	gcc -c $< -o $@ $(cflags) -g
+	$(compiler) -c $< -o $@ $(cflags) -g
 
 clean:
 	echo "Removing executable"

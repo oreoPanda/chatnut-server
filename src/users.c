@@ -4,8 +4,9 @@
 #include <string.h>
 #include <sys/stat.h>   //for mkdir()
 
-#include "messaging.h"
 #include "users.h"
+
+#include "messaging.c.h"
 #include "socketprx.h"	//for SUCCESS and FAILURE
 
 FILE *userlist = NULL;
@@ -19,104 +20,104 @@ char **passwords = NULL;
 	(for C++ look at libcryptopp), maybe try glib hashing for C*/
 
 extern int init_server_directory(void)
-{
-    if( chdir(getenv("HOME")) != 0 )
-    {
-        fprintf( stderr, "Error switching into your home directory: %s\n", strerror(errno) );
-        return 1;
-    }
-    if( mkdir( ".chatnut-server", 0755 ) != 0 )
-    {
-        if( errno != EEXIST )
-        {
-            fprintf( stderr, "Error creating directory .chatnut-server in your home directory: %s\n", strerror(errno) );
-            return 1;
-        }
-    }
-    if( chdir(".chatnut-server") != 0 )
-    {
-        fprintf( stderr, "Error switching to .chatnut-server in your home directory: %s\n", strerror(errno) );
-        return 1;
-    }
-    
-    return 0;
+	{
+	if( chdir(getenv("HOME")) != 0 )
+	{
+		fprintf( stderr, "Error switching into your home directory: %s\n", strerror(errno) );
+		return 1;
+	}
+	if( mkdir( ".chatnut-server", 0755 ) != 0 )
+	{
+		if( errno != EEXIST )
+		{
+			fprintf( stderr, "Error creating directory .chatnut-server in your home directory: %s\n", strerror(errno) );
+			return 1;
+		}
+	}
+	if( chdir(".chatnut-server") != 0 )
+	{
+		fprintf( stderr, "Error switching to .chatnut-server in your home directory: %s\n", strerror(errno) );
+		return 1;
+	}
+
+	return 0;
 }
  
 /*This function loads username and passwords of all registered users into char **usernames and char **passwords*/
 //TODO check and debug
 static int load_all_users(void)
 {
-    int file_length = 0;
+	int file_length = 0;
 
-    userlist = fopen( USERFILE, "r" );
-    if( userlist == NULL )
-    {
-        perror(""); //prints error message associated to last errno
-        return FILE_OPEN_ERROR;
-    }
-    else
-    {
-        //get file length
-        fseek( userlist, 0, SEEK_END );
-        file_length = ftell( userlist );
-        rewind(userlist);
-        
-        //set up data buffer
-        raw_data = calloc( file_length+1, sizeof(char) );   //one extra for termination
-        
-        //read from file
-        fread( raw_data, sizeof(char), file_length, userlist );
-        raw_data[file_length] = 0;
-        
-        //close file
-        fclose(userlist);
-        
-        //crunch the data
-        int i = 0;
-        int usernameLen = 0;
-        int passwordLen = 0;
-        while( raw_data[i] != 0 )
-        {
-            //grab a username
-            int username_pos = i;   //save the position of the username
-            while( raw_data[i] != '\n' )
-            {
-                i++;
-            }
-            usernameLen = i-username_pos;   //calculate length of the username
-            usernames = realloc( usernames, (users+1)*sizeof(char *) );     //add an element
-            *(usernames+users) = calloc( usernameLen+1, sizeof(char) );    //memory for the username + '\0'
-            strncpy( *(usernames+users), raw_data+username_pos, usernameLen );
-            *( *(usernames+users) + usernameLen ) = 0;       //terminate
-            
-            i++;        //skip past the newline
-            
-            //grab a password
-            int password_pos = i;   //save the position of the password
-            while( raw_data[i] != '\n' )
-            {
-                i++;
-            }
-            passwordLen = i-password_pos;
-            passwords = realloc( passwords, (users+1)*sizeof(char *) );
-            *(passwords+users) = calloc( passwordLen+1, sizeof(char) );
-            strncpy( *(passwords+users), raw_data+password_pos, passwordLen );
-            *( *(passwords+users) + passwordLen ) = 0;
-            
-            i++;        //skip past the newline
-            
-            users++; //advance number of loaded users
-        }
-        //terminate the username and password arrays
-        usernames = realloc( usernames, users+1*sizeof(char *) );
-        passwords = realloc( passwords, users+1*sizeof(char *) );
-        *(usernames+users) = NULL;
-        *(passwords+users) = NULL;
-        
-        //free data buffer
-        free(raw_data);
-    }
-    return 0;
+	userlist = fopen( USERFILE, "r" );
+	if( userlist == NULL )
+	{
+		perror(""); //prints error message associated to last errno
+		return FILE_OPEN_ERROR;
+	}
+	else
+	{
+		//get file length
+		fseek( userlist, 0, SEEK_END );
+		file_length = ftell( userlist );
+		rewind(userlist);
+
+		//set up data buffer
+		raw_data = calloc( file_length+1, sizeof(char) );   //one extra for termination
+
+		//read from file
+		fread( raw_data, sizeof(char), file_length, userlist );
+		raw_data[file_length] = 0;
+
+		//close file
+		fclose(userlist);
+
+		//crunch the data
+		int i = 0;
+		int usernameLen = 0;
+		int passwordLen = 0;
+		while( raw_data[i] != 0 )
+		{
+			//grab a username
+			int username_pos = i;   //save the position of the username
+			while( raw_data[i] != '\n' )
+			{
+				i++;
+			}
+			usernameLen = i-username_pos;   //calculate length of the username
+			usernames = realloc( usernames, (users+1)*sizeof(char *) );     //add an element
+			*(usernames+users) = calloc( usernameLen+1, sizeof(char) );    //memory for the username + '\0'
+			strncpy( *(usernames+users), raw_data+username_pos, usernameLen );
+			*( *(usernames+users) + usernameLen ) = 0;       //terminate
+
+			i++;        //skip past the newline
+
+			//grab a password
+			int password_pos = i;   //save the position of the password
+			while( raw_data[i] != '\n' )
+			{
+				i++;
+			}
+			passwordLen = i-password_pos;
+			passwords = realloc( passwords, (users+1)*sizeof(char *) );
+			*(passwords+users) = calloc( passwordLen+1, sizeof(char) );
+			strncpy( *(passwords+users), raw_data+password_pos, passwordLen );
+			*( *(passwords+users) + passwordLen ) = 0;
+
+			i++;        //skip past the newline
+
+			users++; //advance number of loaded users
+		}
+		//terminate the username and password arrays
+		usernames = realloc( usernames, users+1*sizeof(char *) );
+		passwords = realloc( passwords, users+1*sizeof(char *) );
+		*(usernames+users) = NULL;
+		*(passwords+users) = NULL;
+
+		//free data buffer
+		free(raw_data);
+	}
+	return 0;
 }
 
 extern int login( char *username, char *password )

@@ -1,172 +1,28 @@
-/*message_server.c*/
+/*chatnut-server.cpp*/
 
 /*http://beej.us/guide/bgnet/output/html/multipage/advanced.html#blocking*/
 /*for a great starters select() tutorial*/
 
+#include <iostream>
+#include <forward_list>
+#include <string>
+
 #include "messaging.h"
-#include "getch.h"
-#include "socketprx.h"
-#include "users.h"
+#include "networking.h"
 
-//FIXME check if FD_SET and other functions need error checks that I haven't done yet
-//TODO this server can recognize closed connections but I'm not sure about broken connections
+using namespace action;
+using namespace messaging;
+using namespace networking;
+
+//TODO this server can recognize closed connections but I'm not quite sure about broken connections
 //TODO check for too many arguments? (especially /who)
-
-struct buddy
-{
-    socket_t *sock;
-    struct buddy *next;
-};
-
-struct client
-{
-    socket_t sock;
-    int login_status;
-    char name[NAMELEN];
-    struct client *next;
-    struct buddy *buddy;
-};
-
-struct client *start = NULL;
-
-const char conn_msg[CONN_MSG_LEN] = "Connected\n";
-
-void print_error(char *error_message)
-{
-	fprintf( stderr, "%s\n", error_message );
-
-	return;
-}
-
-/*add a client and return a pointer to it*/
-struct client *add_client( void )
-{
-    struct client *pointer = NULL;
-
-    if( start == NULL ) //if none there yet
-    {
-        if( (start = malloc( sizeof(struct client) ) ) == NULL )
-        {
-            print_error("(add_client)Error: Out of memory: ");
-
-            return start;	//NULL
-        }
-
-        start->login_status = FALSE;
-        memset( start->name, 0, NAMELEN );
-        start->next = NULL;
-        start->buddy = NULL;
-
-        return start;	//not NULL
-    }
-    else
-    {
-        pointer = start;
-        while( pointer->next != NULL )  //scan to last element, allocate space for the element after that
-        {
-            pointer = pointer->next;
-        }
-        if( (pointer->next = malloc( sizeof(struct client) ) ) == NULL )
-        {
-        	print_error("(add_client)Error: Out of memory: ");
-
-			return pointer->next;	//NULL
-        }
-        pointer = pointer->next;	//switch to the new element
-
-        pointer->login_status = FALSE;
-        memset( pointer->name, 0, NAMELEN );
-        pointer->next = NULL;
-        pointer->buddy = NULL;
-
-        return pointer;
-    }
-}
-
-struct buddy *add_buddy( struct client *client )
-{
-    struct buddy *buddy = NULL;
-
-    if( client->buddy == NULL )	 //no buddy yet
-    {
-        if( ( client->buddy = malloc( sizeof(struct buddy) ) ) == NULL )
-        {
-            return buddy;	//NULL
-        }
-        buddy = client->buddy;
-        buddy->next = NULL;
-    }
-
-    else		//at least one buddy is set already
-    {
-        struct buddy *pointer = NULL;
-
-        pointer = client->buddy;
-        while( pointer->next != NULL )
-        {
-            pointer = pointer->next;		//go to last element
-        }
-
-        if( ( pointer->next = malloc( sizeof(struct buddy) ) ) == NULL )	//allocate space for new element
-        {
-            return buddy;	//NULL
-        }
-        buddy = pointer->next;		//go to new element
-        buddy->next = NULL;			//terminate the new last element
-    }
-
-    return buddy;
-}
-
-/*deletes a client element, returns pointer to element behind the deleted element. DOES NOT close socket.*/
-//FIXME make sure no clients with open sockets get deleted (close them before this function)
-struct client *delete_client(struct client *toDelete)
-{
-    struct client *pointer = NULL;
-
-    if(start)
-    {
-        if( start == toDelete )	 //first element is supposed to be deleted
-        {
-            printf( "(delete_client)Deleting first client.\n" );
-            pointer = start->next;	  //works even when start->next = NULL, because then the new start is just NULL
-            free(start);
-            start = pointer;	//set start equal to the new start element
-            return pointer;	   //return new first element (start or NULL)
-        }
-        else
-        {
-            struct client *nextPointer = NULL;
-
-            pointer = start;
-            while( pointer->next != NULL )  //only if there are elements behind this
-            {
-                nextPointer = pointer->next;	//pointer will point to one element, nextPointer to the one behind it
-                if( nextPointer	== toDelete	)//nextPointer can be deleted, pointer will be returned (the element in front of deleted one)
-                {
-                    printf( "(delete_client)Deleting client.\n" );
-                    pointer->next = nextPointer->next;//bridge past nextPointer, could make next element of pointer NULL (last elem. found)
-                    free(nextPointer);
-                    return pointer->next;	//return the element behind the deleted one (nextPointer was deleted, so this could either be another client or NULL)
-                }
-                pointer = nextPointer;
-            }
-            fprintf( stderr, "ERROR: No client found to delete!\n" );
-            return NULL;
-        }
-    }
-    else
-    {
-        return NULL;
-    }
-}
 
 /*this function deletes all buddy objects of a client*/
 /*call this function with current_buddy set to client->buddy*/
-void delete_buddies( struct client *client, struct buddy *current_buddy )
-{
+//void delete_buddies( struct client *client, struct buddy *current_buddy )
+//{
 	/*do something if there is at least one buddy*/
-	if( current_buddy )			//this line is only relevant for the first call (the one that launches the recursion)
+	/*if( current_buddy )			//this line is only relevant for the first call (the one that launches the recursion)
 	{
 		while( current_buddy->next )
 		{
@@ -177,9 +33,9 @@ void delete_buddies( struct client *client, struct buddy *current_buddy )
 	}
 
 	return;
-}
+}*/
 
-void delete_buddy_references_to(struct client *client)
+/*void delete_buddy_references_to(struct client *client)
 {
     struct client *client_pointer = start;
 
@@ -221,44 +77,22 @@ void delete_buddy_references_to(struct client *client)
 
         client_pointer = client_pointer->next;
     }
-}
-
-int check_incoming( socket_t *hostSock )
-{
-    fd_set readfds;
-    struct timeval timeout;
-    int highestfd;
-
-    FD_SET( *hostSock, &readfds );
-    reset_timeout( &timeout );
-    highestfd = *hostSock;
-
-    //FIXME timeouts with select() (and getch())
-    my_select( highestfd+1, &readfds, NULL, NULL, &timeout );	//select() needs highest numbered fd + 1
-    if( FD_ISSET(*hostSock, &readfds) )	//if a connection is waiting
-    {
-        return SUCCESS;
-    }
-    else
-    {
-        return FAILURE;
-    }
-}
+}*/
 
 //TODO check login command (here and in cmd_reply())
 //TODO rethink login and logout mechanism, a server-side login-request should be useful upon connecting a client. /logout should disconnect the client.
 	//the "Connected" message is enough for a login request...
 //TODO fully adapt this function to argc
 /*evaluate commands and return an integer that will later be used to generate a reply for the client*/
-commandreply eval_cmd( char *completeCommand, struct client *client, char **data )
+/*commandreply eval_cmd( char *completeCommand, struct client *client, char **data )
 {
 	char *command = strtok( completeCommand, " " );//cut off command
 	printf( "(eval_cmd)COMMAND: %s\n", command );
 	int argc = 0;
-	char **argv = NULL;
+	char **argv = NULL;*/
 
 	/*copy arguments into argv, argv is not terminated but argc shows how many elements are in it*/
-	char *arg = NULL;
+	/*char *arg = NULL;
 	while( (arg = strtok( NULL, " " )) != NULL )	//cut off one argument at a time
 	{
 		argv = realloc( argv, sizeof(char *) * (argc+1) );
@@ -291,13 +125,13 @@ commandreply eval_cmd( char *completeCommand, struct client *client, char **data
 		}
 		else
 		{
-			struct client *client_pointer = start;
+			struct client *client_pointer = start;*/
 
 			/*scan thru clients*/
-			while( client_pointer != NULL )
-			{
+			//while( client_pointer != NULL )
+			//{
 				/*for each client, compare with all arguments*/
-				for( int i = 0; i < argc; i++ )
+				/*for( int i = 0; i < argc; i++ )
 				{
 					if( strcmp(client_pointer->name, argv[i]) == 0 )//not using strncmp() because I can be sure the argument is terminated
 					{
@@ -404,9 +238,9 @@ commandreply eval_cmd( char *completeCommand, struct client *client, char **data
 		if( argc != 1 )
 		{
 			return LOOKUP_FAILURE;
-		}
+		}*/
 		/*call find_user, if found return LOOKUP_SUCCESS and set *data*/
-		else if( find_user( argv[0], NULL ) == SUCCESS )
+		/*else if( find_user( argv[0], NULL ) == SUCCESS )
 		{
 			*data = calloc( strlen(argv[0])+1, sizeof(char) );
 			strncpy( *data, argv[0], strlen(argv[0])+1 );
@@ -421,10 +255,10 @@ commandreply eval_cmd( char *completeCommand, struct client *client, char **data
 	//else
 	printf( "(eval_cmd)Unknown command: %s\n", command );
 	return ERROR;
-}
+}*/
 
 /*Sends an appropriate reply to the client.*/
-void cmd_reply( commandreply value, struct client *client, char *data ) //value indicates what kind of command we're dealing with, that is how cmd_reply knows what reply to send
+/*void cmd_reply( commandreply value, struct client *client, char *data ) //value indicates what kind of command we're dealing with, that is how cmd_reply knows what reply to send
 {
     char *reply;
     char indicator = value;
@@ -443,7 +277,7 @@ void cmd_reply( commandreply value, struct client *client, char *data ) //value 
         	reply = calloc( strlen(HELP_STR)+1, sizeof(char) );
             strncpy( reply, HELP_STR, strlen(HELP_STR)+1 );
             break;
-        }
+        }*/
 			
         /*case LIST://FIXME check if this causes funny output when a client's name is not set but added to reply
         {
@@ -465,7 +299,7 @@ void cmd_reply( commandreply value, struct client *client, char *data ) //value 
             break;
         }*/
 
-        case BUDDY_IS_SET:
+        /*case BUDDY_IS_SET:
         {
         	reply = calloc( strlen(data) + 1 + strlen(BUDDY_IS_SET_STR)+1, sizeof(char) );
         	strncpy( reply, data, strlen(data)+1 );
@@ -562,16 +396,16 @@ void cmd_reply( commandreply value, struct client *client, char *data ) //value 
     free(reply);
 
     return;
-}
+}*/
 
 /*message/command getting function. Returns FAILURE if client left*/
-int handle_once( struct client *client )
+/*int handle_once( struct client *client )
 {
 	char *msg_buffer = NULL;
-	status readable;
+	status readable;*/
 
 	/*check for new messages/commands*/
-	int retval = TCP_recv( &client->sock, &msg_buffer, &readable );
+	/*int retval = TCP_recv( &client->sock, &msg_buffer, &readable );
 
 	if( readable == SUCCESS )	//status is SUCCESS when read would not block and FAILURE when read would block
 	{
@@ -582,21 +416,21 @@ int handle_once( struct client *client )
 			close_socket( &client->sock );
 			printf("(handle_once)Client disconnected\n");
 			return FAILURE;
-		}
+		}*/
 
 		/*new incoming data*/
-		else if( retval != -1 )
-		{
+		//else if( retval != -1 )
+		//{
 			/*data is command*/
-			if( *msg_buffer == '/' )
+			/*if( *msg_buffer == '/' )
 			{
 				char *data = NULL;	//data will contain username upon login or buddyname on lookup / buddy_is_set
 				int eval_ret = eval_cmd( msg_buffer, client, &data );
 				cmd_reply( eval_ret, client, data );
-			}//end data is command
+			}//end data is command*/
 
 			/*data is message, send to all buddies*/
-			else
+			/*else
 			{
 				struct buddy *buddy = client->buddy;
 				while( buddy != NULL )
@@ -619,76 +453,150 @@ int handle_once( struct client *client )
 	}//end status readable == SUCCESS
 
 	return SUCCESS;
+}*/
+
+/*delete a client (the one given in argument) and return the previous one or NULL*/
+Client * deleteClient(Client * current)
+{
+	/*Delete current client*/
+	Client *temp = current;
+	/*there are clients left in circle*/
+	if( current->Next() != current )
+	{
+		current = current->Next();
+	}
+	/*the client that is deleted is the last one in the circle*/
+	else
+	{
+		current = NULL;
+	}
+	delete temp;
+	/*jump back to previous so that jumping to next won't leave anyone out*/
+	if(current)
+	{
+		current = current->Prev();
+	}
+
+	return current;
 }
 
 int main(void)
 {
-    socket_t hostSock;
-    struct client *client = NULL;
+	Client * current = NULL;
 
-    /*create a TCP socket*/
-    if( (hostSock = create_socket( PF_INET, SOCK_STREAM, 0 )) >= 0 )
-    {
-        if( bind_socket( &hostSock, INADDR_ANY, 1234 ) == SUCCESS &&
-                listen_socket(&hostSock) == SUCCESS )
-        {
-            /*main loop, handles connections and messaging*/
-            init_server_directory();
-            client = start;
-            do
-            {
-                if( client == NULL )   //empty, check for connection to fill it
-                {
-                    if( check_incoming( &hostSock ) == SUCCESS )
-                    {
-                        /*fill with connection*/
-                        client = add_client();
-                        if(client)
-                        {
-                            accept_socket( &hostSock, &client->sock );
-                            printf( "(main)Fully established connection to a new client!\n");
-                            TCP_send( &client->sock, CONNECTED, conn_msg );
-                            client = client->next;
-                        }
-                        continue;
-                    }
-                    else
-                    {
-                        client = start; //end of list was reached and could not be filled, so next time the while loop will start over again
-                        continue;	   //element is empty and could not be filled
-                    }
-                }
-                else		//client element is not NULL
-                {
-                    /*handle client, if it left delete it. Go on with next client*/
-                    if( handle_once(client) == FAILURE )
-                    {
-                        delete_buddy_references_to(client);
-                        client = delete_client(client);	 //delete_client returns pointer to client behind deleted one
-                    }
-                    else
-                    {
-                        client = client->next;
-                    }
-                }
-            }
-            while( getch() != 'q' );	//do one action with one client, then check this again
+	//init_server_directory();
 
-            /*upon quitting*/
-            //delete clients and buddy references
-            client = start;
-            while(client)
-            {
-                delete_buddy_references_to(client);
-                client = delete_client(client);	 //delete_client again returns pointer to client behind deleted one
-                if(client)
-                {
-                    client = client->next;
-                }
-            }
-        }
-        close_socket(&hostSock);
-    }
+	/*Initialize host class*/
+	Horst horst(&std::cerr, 1234, 10);
+	if( horst.init_success() )
+	{
+		/*Create action vector*/
+		std::forward_list<Action> actions;
+		/*main loop*/
+		do
+		{
+			/*check for new connection request*/
+			if( horst.check_incoming() )
+			{
+				struct sockaddr_in addr;
+				socket_t client_sock;
 
-    return 0;
+				client_sock = horst.accept_connection(addr);
+				if( client_sock != -1 )
+				{
+					/*Add first client*/
+					if(!current)
+					{
+						current = new Client(&std::cerr, &std::clog, client_sock, addr, NULL);
+					}
+					/*Add client behind current*/
+					else
+					{
+						new Client(&std::cerr, &std::clog, client_sock, addr, current);
+					}
+
+					/*Send the client the Connected reply along with a short message*/
+					Message msg("",current);
+					msg.send_signal_connected();
+				}
+			}//end horst.check_incoming()
+
+			/*Check if the current client sent any messages or commands*/
+			/*switch to if(current && current->Connected() ) */
+			if(current && current->Connected() )
+			{
+				/*check for a new message*/
+				if(current->check_incoming())
+				{
+					/*get new message*/
+					std::string msg;
+					if( current->get_message(msg) )
+					{
+						/*TODO evaluate message (or command)*/
+						Command cmd(msg, current, &actions);
+						if(cmd.isCommand() )
+						{
+							/*TODO command*/
+							cmd.start_eval();
+						}
+						else
+						{
+							/*TODO message*/
+							Message message(msg, current);
+							message.send();
+						}
+					}
+				}
+			}//end current && current->Connected()
+
+			/*if the client is no longer connected (Connected message failed or he is actually gone) delete it*/
+			if( !current->Connected() )
+			{
+				current = deleteClient(current);
+			}
+
+			/*Move on to the next client*/
+			if(current)
+			{
+				current = current->Next();
+			}
+		}
+		while( /*getch() != 'q'*/1 );
+
+		/*delete all clients*/
+		while(current)
+		{
+			/*Delete current*/
+			current = deleteClient(current);
+		}
+	}
+
+	return 0;
 }
+
+	/*handle client, if it left delete it. Go on with next client*/
+				/*	if( handle_once(client) == FAILURE )
+					{
+						delete_buddy_references_to(client);
+						client = delete_client(client);	 //delete_client returns pointer to client behind deleted one
+					}*/
+
+
+			/*upon quitting*/
+			//delete clients and buddy references
+			/*client = start;
+			while(client)
+			{
+				delete_buddy_references_to(client);
+				client = delete_client(client);	 //delete_client again returns pointer to client behind deleted one
+				if(client)
+				{
+					client = client->next;
+				}
+			}
+		}
+		close_socket(&hostSock);
+	}
+
+	return 0;
+}*/

@@ -1,6 +1,6 @@
 /*getch.c*/
 
-#include "getch.h"
+#include "Getch.h"
 
 static struct termios new_io;
 static struct termios old_io;
