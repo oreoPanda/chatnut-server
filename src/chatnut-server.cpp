@@ -7,6 +7,8 @@
 #include <forward_list>
 #include <string>
 
+#include "Action.h"
+#include "Getch.h"
 #include "messaging.h"
 #include "networking.h"
 
@@ -491,7 +493,7 @@ int main(void)
 	if( horst.init_success() )
 	{
 		/*Create action vector*/
-		std::forward_list<Action> actions;
+		std::forward_list<action::Action> actions;
 		/*main loop*/
 		do
 		{
@@ -525,6 +527,9 @@ int main(void)
 			/*switch to if(current && current->Connected() ) */
 			if(current && current->Connected() )
 			{
+				/*handle actions*/
+				current->handle_actions(actions);
+
 				/*check for a new message*/
 				if(current->check_incoming())
 				{
@@ -537,7 +542,7 @@ int main(void)
 						if(cmd.isCommand() )
 						{
 							/*TODO command*/
-							cmd.start_eval();
+							cmd.evaluate();
 						}
 						else
 						{
@@ -550,7 +555,7 @@ int main(void)
 			}//end current && current->Connected()
 
 			/*if the client is no longer connected (Connected message failed or he is actually gone) delete it*/
-			if( !current->Connected() )
+			if(current && !current->Connected() )
 			{
 				current = deleteClient(current);
 			}
@@ -561,7 +566,7 @@ int main(void)
 				current = current->Next();
 			}
 		}
-		while( /*getch() != 'q'*/1 );
+		while( getch() != 'q' );
 
 		/*delete all clients*/
 		while(current)

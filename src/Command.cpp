@@ -11,20 +11,18 @@ namespace messaging
 {
 
 	Command::Command(std::string const str, networking::Client * const cur, std::forward_list<action::Action> *actionsptr)
-	:iscmd( str[0] == '/' ? true:false ), current(cur), actionlist(actionsptr)
+	:iscmd( str[0] == '/' ? true:false ), current(cur), command(str.substr(1,str.find_first_of(' ')-1) ), actionlist(actionsptr)
 	{
 		if(this->iscmd)
 		{
-			size_t begin_pos = 1;
+			size_t begin_pos;
 			size_t space_pos;
 
-			/*strip command*/
-			space_pos = str.find_first_of(' ');
-			this->command = str.substr(begin_pos, space_pos-1);
-			begin_pos += 1;
+			/*jump behind command that has already been stored*/
+			begin_pos = str.find_first_of(' ') + 1;
 
-			/*strip arguments*/
-			space_pos = str.find_first_of(' ');
+			/*strip argument TODO support for multiple arguments*/
+			space_pos = str.find_first_of(' ', begin_pos);
 			if(space_pos != std::string::npos)
 			{
 				this->arguments.push_back(str.substr(begin_pos, space_pos-1) );
@@ -42,7 +40,7 @@ namespace messaging
 		return this->iscmd;
 	}
 
-	void Command::start_eval() const
+	void Command::evaluate() const
 	{
 		if(this->command.compare("/who") == 0)
 		{
@@ -71,28 +69,21 @@ namespace messaging
 	}
 
 	/*Handles the /who command (surprise! :o)*/
-	/*stores the names of the requested buddies in buddyvector inside the client and creates an Action with names of requested buddies*/
+	/*stores the names of the requested buddies in buddyvector inside the client*/
+	/*creates an Action with an action receiver
+	 * and an iterator pointing to a buddy object inside the buddylist of the sender of the command*/
 	void Command::who_handle() const
 	{
-		action::Action temp();
 		/*scan through arguments*/
 		/*TODO for multiple arguments: uncomment and check what exception to catch*/
 		int i = 0;
-		do
-		{
-			//try
-			//{
-				std::string argument = arguments.at(i);
-			//}
-			//catch
-			//{
-				//break;
-			//}
-			//this->current->add_buddy(argument);		TODO FIXME TODO uncomment and pass an action pointer
-			break;		//TODO for multiple arguments: delete this line
-			//i++;
-		}
-		while(true);
+
+		std::string argument = arguments.at(i);
+		std::forward_list<networking::Buddy>::iterator const iter = this->current->add_buddy(argument);
+		action::Action a(argument, iter);
+		actionlist->push_front(a);
+
+		/*TODO send an adequate reply*/
 	}
 
 	void Command::unwho_handle() const

@@ -23,6 +23,7 @@ namespace networking
 		open = false;
 		usable = false;
 		listening = false;
+
 		/*check if socket is open now*/
 		if(sock != -1)
 		{
@@ -34,7 +35,7 @@ namespace networking
 		}
 
 		/*set socket reusable*/
-		bool option_value = true;
+		int option_value = 1;
 		if( setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(option_value) ) != -1 )
 		{
 			usable = true;
@@ -50,7 +51,7 @@ namespace networking
 		address.sin_port = htons(port);
 		address.sin_addr.s_addr = htonl(INADDR_ANY);
 
-		bind(sock, reinterpret_cast< struct sockaddr * >(&address), port);
+		bind(sock, reinterpret_cast< struct sockaddr * >(&address), sizeof(struct sockaddr_in) );
 
 		/*listen on the correct port*/
 		if( listen(sock, max_num_of_clients) == 0 )

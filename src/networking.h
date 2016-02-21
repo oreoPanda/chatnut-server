@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "Action.h"
 #include "Buddy.h"
 
 typedef int socket_t;
@@ -26,6 +27,7 @@ namespace networking
 {
 
 	class Buddy;
+	class Action;
 
 	class Horst //Beckmann
 	{
@@ -53,15 +55,17 @@ namespace networking
 	public:
 		Client(std::ostream * err, std::ostream * log, socket_t const sock, struct sockaddr_in const addr, Client * p);
 		~Client();
-		Client * Prev();
-		Client * Next();
+		Client * Prev() const;
+		Client * Next() const;
 		void setPrev(Client * p);
 		void setNext(Client * n);
 		bool Connected() const;
+		void handle_actions(std::forward_list<action::Action> & actions);
 		bool check_incoming() const;
 		void Send(std::string & str);
 		bool get_message(std::string & msg);
-		std::forward_list<Buddy>::iterator add_buddy(std::string const & name);
+		std::string const & get_name() const;
+		std::forward_list<Buddy>::iterator const add_buddy(std::string const & name);
 	private:
 		bool connected;
 		std::ostream * error_stream;
@@ -73,6 +77,7 @@ namespace networking
 		Client *prev;
 		Client *next;
 		std::forward_list<Buddy> buddies;
+		std::forward_list<std::forward_list<Buddy>::iterator> reversebuddies;
 		bool receive(std::string & str, unsigned int len);
 		void error(std::string const & msg) const;
 		void error(std::string const & msg, int errnum) const;

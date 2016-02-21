@@ -27,4 +27,10 @@ namespace networking
 		this->iter = i;
 	}
 
+	/*returns a reference to the const name of this object*/
+	std::string const & Buddy::get_name() const
+	{
+		return this->clientname;
+	}
+
 }	/* namespace networking */

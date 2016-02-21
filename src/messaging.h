@@ -11,8 +11,8 @@
 #include <forward_list>
 #include <vector>
 
-#include "networking.h"
 #include "Action.h"
+#include "networking.h"
 
 namespace messaging
 {
@@ -67,12 +67,12 @@ namespace messaging
 		Command(std::string const str, networking::Client * const cur, std::forward_list<action::Action> * actionsptr);
 		virtual ~Command();
 		bool isCommand() const;
-		void start_eval() const;
+		void evaluate() const;
 	private:
 		bool iscmd;
-		std::string command;
-		std::vector<std::string> arguments;
-		networking::Client * current;	//TODO should be a const pointer
+		networking::Client * const current;
+		std::string const command;
+		std::vector<std::string> arguments;	//TODO maybe change to array, maybe const?
 		std::forward_list<action::Action> * actionlist;
 		void who_handle() const;
 		void unwho_handle() const;

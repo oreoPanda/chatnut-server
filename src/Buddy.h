@@ -23,6 +23,7 @@ namespace networking
 			Buddy(std::string const & name);
 			~Buddy();
 			void set(Client const * const cli, std::forward_list<Buddy>::iterator const & i);
+			std::string const & get_name() const;
 		private:
 			Client const * client;
 			std::string const clientname;

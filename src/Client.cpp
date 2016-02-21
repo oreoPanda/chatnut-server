@@ -40,13 +40,13 @@ namespace networking
 	}
 
 	/*return pointer to the previous element in circle*/
-	Client * Client::Prev()
+	Client * Client::Prev() const
 	{
 		return this->prev;
 	}
 
 	/*return pointer to next element in circle*/
-	Client * Client::Next()
+	Client * Client::Next() const
 	{
 		return this->next;
 	}
@@ -69,6 +69,23 @@ namespace networking
 		return this->connected;
 	}
 
+	/*handle actions by scanning through the list of actions, adding iterators to reverselist
+	 * and setting up buddylist of affected clients*/
+	void Client::handle_actions(std::forward_list<action::Action> & actions)
+	{
+		std::forward_list<action::Action>::iterator i;
+		i = actions.begin();
+		while(i != actions.end() )
+		{
+			if( (i->get_receiver().compare(this->name) ) == 0 )
+			{
+				reversebuddies.push_front(i->get_buddy_iter() );
+			}
+		}
+
+		return;
+	}
+
 	/*check for an incoming message*/
 	bool Client::check_incoming() const
 	{
@@ -84,7 +101,7 @@ namespace networking
 		str_c = static_cast <char *> (calloc(len+1, sizeof(char) ) );
 
 		status = recv(this->sock, str_c, len, 0);
-		*(str_c+4) = 0;
+		*(str_c+len) = 0;
 
 		/*evaluate return value of recv()*/
 		if( static_cast <unsigned int > (status) == len)
@@ -177,6 +194,11 @@ namespace networking
 		}
 	}
 
+	std::string const & Client::get_name() const
+	{
+		return this->name;
+	}
+
 	void Client::error(std::string const & msg) const
 	{
 		*error_stream << "Client error: " << msg << std::endl;
@@ -193,9 +215,9 @@ namespace networking
 		*log_stream << "Client: " << msg << std::endl;
 	}
 
-	std::forward_list<Buddy>::iterator Client::add_buddy(std::string const & name)
+	std::forward_list<Buddy>::iterator const Client::add_buddy(std::string const & name)
 	{
-		Buddy temp(NULL, name, *new std::forward_list<Buddy>::iterator);
+		Buddy temp(name);
 		buddies.push_front(temp);
 		return buddies.begin();
 	}
