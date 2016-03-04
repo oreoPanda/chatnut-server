@@ -104,11 +104,11 @@ namespace networking
 			{
 				/*create a new buddy object and add it to our reverselist*/
                                 Buddy temp;
-                                temp.set(i->get_owner() );
+                                temp.set(i->get_creator() );
                                 temp.set(i->get_buddy_iter() );
 				reversebuddylist.push_front(temp);
 				/*tell the owner of the action who we are and where to find himself in our reverselist (for when he leaves)*/
-                                i->get_owner()->set_buddy_data(reversebuddylist.begin(), this);
+                                i->get_creator()->set_buddy_data(reversebuddylist.begin(), this);
 				/*remove the action from list*/
 				if(i == actions.begin() )
 				{

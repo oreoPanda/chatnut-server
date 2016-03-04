@@ -25,11 +25,10 @@ typedef int socket_t;
 namespace networking
 {
 
-        class Client;
-	class Buddy;
-	class Action;
+        class Action;
+        class Buddy;
 
-	class Horst //Beckmann
+	class Horst //Beckmann     //TODO this could potentially be hazardous
 	{
 	public:
 		Horst(std::ostream * err, unsigned short port, int max);
@@ -90,33 +89,27 @@ namespace networking
 		void log(std::string const & msg) const;
 	};
 
-	/*typedef enum
-	{
-		WHO
-	}actiontype;*/
-
-	/*mostly a storage class, stores an iterator to a buddy inside buddylist of a client that sent a /who command.
-	 * actionreceiver is the name of the client that was added by the /who, the respective client will add the iterator
-	 * from this action into his reverselist and set a pointer to himself and an iterator to the richt place in his reverselist
-	 * in the element of the action's original creator buddylist*/
-	/*Action currently only supports one iterator, it is wanted to expand supporting multiple iterators,
-	 * each one set by a different /who request from a different client but to the same receiver. The receiver will
-	 * only need to add all of the iterators in Action to his reverselist and edit all of the sender's buddylists as described above.
-	 * The sender isn't stored because the iterator points directly at a spot in his buddylist.*/
+	/*a storage and information transfer class used for the /who command
+         * owner:           pointer to the commanding client
+	 * receivername:    the name of the client requested by /who (the new buddy of the commanding client). It will receive this action.
+	 * iter:            an iterator of the owner's buddylist pointing at the place where the receiver's name and later a pointer to him is stored
+         */
+	/*At the moment, each /who creates one action.
+         * In the future, there will only be one action per receiver
+         *      owner and iter will have to be some array, vector or (forward) list
+         *          each /who request will add one owner and an iterator of his buddylist to the right action
+         */
 	class Action
 	{
 	public:
-                Action(std::string const & name, Client * const owner, std::forward_list<Buddy>::iterator const & i);
+                Action(Client * const creator, std::string const & recv_name, std::forward_list<Buddy>::iterator const & i);
 		~Action();
+                Client * get_creator();
 		std::string const & get_receiver() const;
-                Client * get_owner();
 		std::forward_list<Buddy>::iterator const & get_buddy_iter() const;
-		//void add_object(std::string const & name, std::forward_list<networking::Buddy>::iterator const & iter);
-		//bool pop_object_by_name(std::string const & name, networking::Buddy & b);
 	private:
-		/*actiontype type;*/
-		std::string const actionreceiver;
-		Client * const owner;
+		Client * const creator;
+                std::string const receivername;
 		std::forward_list<Buddy>::iterator const iter;
 	};
 

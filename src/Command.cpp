@@ -121,7 +121,7 @@ namespace messaging
 		/*TODO multiple arguments*/
 		std::string argument = arguments.at(0);
 		std::forward_list<networking::Buddy>::iterator const iter = this->current->add_buddy(argument);
-		networking::Action a(argument, this->current, iter);
+		networking::Action a(this->current, argument, iter);
 		actionlist->push_front(a);
 
 		/*TODO send an adequate reply*/
