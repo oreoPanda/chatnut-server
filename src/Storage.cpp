@@ -7,13 +7,15 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <errno.h>
 
 #include "Storage.h"
 
 namespace fileio
 {
 
-	Storage::Storage()
+	Storage::Storage(std::ostream * const err)
+	:error_stream(err)
 	{
 		std::cout << "Storage Constructor." << std::endl;
 	}
@@ -35,9 +37,21 @@ namespace fileio
 		return;
 	}
 
-	StorageReader::StorageReader()
+	/*write an error to the specified error stream*/
+	void Storage::error(std::string const & msg, int errnum) const
+	{
+		*error_stream << "Client error: " << msg << strerror(errnum) << std::endl;
+	}
+
+	StorageReader::StorageReader(std::ostream * const err)
+	:Storage(err), dir_is_init(false)
 	{
 		std::cout << "StorageReader Constructor." << std::endl;
+
+		/*initialize directory structure*/
+		init_directory_structure();
+
+		/*load userlist*/
 	}
 
 	StorageReader::~StorageReader()
@@ -50,10 +64,123 @@ namespace fileio
 		}
 	}
 
-	/*TODO maybe use const casts in return and make this function const*/
-	std::string & StorageReader::get_message()
+	void StorageReader::init_directory_structure()
+	{
+		if( chdir(getenv("HOME")) != 0 )
+		{
+			fprintf( stderr, "Error switching into your home directory: %s\n", strerror(errno) );
+			this->dir_is_init = false;
+			return;
+		}
+		if( mkdir( ".chatnut-server", 0755 ) != 0 )
+		{
+			if( errno != EEXIST )
+			{
+				//TODO error in parent class Storage
+				error("Error creating directory .chatnut-server in your home directory", errno );
+				this->dir_is_init = false;
+				return;
+			}
+		}
+		if( chdir(".chatnut-server") != 0 )
+		{
+			fprintf( stderr, "Error switching to .chatnut-server in your home directory: %s\n", strerror(errno) );
+			this->dir_is_init = false;
+			return;
+		}
+
+		this->dir_is_init = true;
+		return;
+	}
+
+	/*check if the initialization was successful*/
+	bool StorageReader::init_success() const
+	{
+		return this->dir_is_init;
+	}
+
+	void StorageReader::load_all_users()
+	{
+		std::string username;
+		std::string password;
+
+		/*open userlist*/
+		file.open("userlist");
+		if(file.is_open() )
+		{
+			/*read usernames and passwords from file and store them in the specified vectors*/
+			while(file.good() )
+			{
+				getline(file, username);
+				if(!file.good() )
+				{
+					break;
+
+				}
+
+				getline(file, password);
+				/*check badbit and failbit, eofbit doesn't matter here*/
+				if(file.bad() || !file.fail() )
+				{
+					this->usernames.pop_back();	//don't store the username if password couldn't be read
+					break;
+				}
+				else
+				{
+					this->usernames.push_back(username);
+					this->passwords.push_back(password);
+				}
+			}//end reading file
+
+			/*check whether file.failbit and/or file.badbit are set*/
+			if(!file)
+			{
+				if(file.bad() )
+				{
+					//TODO I/O error
+				}
+				else		//just failbit
+				{
+					//TODO logical error
+				}
+			}//end error check
+
+		}//end file is open
+		else
+		{
+			//TODO file couldn't be opened
+		}
+
+		return;
+	}
+
+
+	std::string StorageReader::get_message() const
 	{
 		return message;
+	}
+
+	/*Look up the password to a given username by scanning TODO binary search.*/
+	bool StorageReader::check_password_for(std::string const & username, std::string const & password) const
+	{
+		bool password_true = false;
+
+		if(!username.empty() )
+		{
+			for(unsigned int i = 0; i < this->usernames.size(); i++)
+			{
+				if(this->usernames.at(i).compare(username) == 0)
+				{
+					if(this->passwords.at(i).compare(password) == 0)
+					{
+						password_true = true;
+					}
+					break;
+				}
+			}
+		}
+
+		return password_true;
 	}
 
 	bool StorageReader::read()
@@ -96,7 +223,8 @@ namespace fileio
 		}
 	}
 
-	StorageWriter::StorageWriter()
+	StorageWriter::StorageWriter(std::ostream * const err)
+	:Storage(err)
 	{
 		std::cout << "StorageWriter Constructor." << std::endl;
 	}

@@ -7,17 +7,16 @@
 #include <forward_list>
 #include <string>
 
-#include "Action.h"
 #include "Getch.h"
 #include "messaging.h"
 #include "networking.h"
+#include "Storage.h"
 
-using namespace action;
+using namespace fileio;
 using namespace messaging;
 using namespace networking;
 
 //TODO this server can recognize closed connections but I'm not quite sure about broken connections
-//TODO check for too many arguments? (especially /who)
 
 /*this function deletes all buddy objects of a client*/
 /*call this function with current_buddy set to client->buddy*/
@@ -485,15 +484,20 @@ Client * deleteClient(Client * current)
 int main(void)
 {
 	Client * current = NULL;
+	StorageReader reader(&std::cerr);
 
-	//init_server_directory();
+	/*only go on if directory initialization was successful*/
+	if(reader.init_success() == false)
+	{
+		return 1;
+	}
 
 	/*Initialize host class*/
 	Horst horst(&std::cerr, 1234, 10);
 	if( horst.init_success() )
 	{
-		/*Create action vector*/
-		std::forward_list<action::Action> actions;
+		/*Create action list*/
+		std::forward_list<Action> actions;
 		/*main loop*/
 		do
 		{
@@ -518,17 +522,19 @@ int main(void)
 					}
 
 					/*Send the client the Connected reply along with a short message*/
-					Message msg("",current);
-					msg.send_signal_connected();
+					Command welcome_cmd(current);
 				}
 			}//end horst.check_incoming()
 
 			/*Check if the current client sent any messages or commands*/
 			/*switch to if(current && current->Connected() ) */
-			if(current && current->Connected() )
+			if(current && current->get_Connected() )
 			{
 				/*handle actions*/
-				current->handle_actions(actions);
+				if(current->get_Login() == true)
+				{
+					current->handle_actions(actions);
+				}
 
 				/*check for a new message*/
 				if(current->check_incoming())
@@ -538,7 +544,7 @@ int main(void)
 					if( current->get_message(msg) )
 					{
 						/*TODO evaluate message (or command)*/
-						Command cmd(msg, current, &actions);
+						Command cmd(msg, current, &actions, &reader);
 						if(cmd.isCommand() )
 						{
 							/*TODO command*/
@@ -552,10 +558,10 @@ int main(void)
 						}
 					}
 				}
-			}//end current && current->Connected()
+			}//end current && current->get_Connected()
 
 			/*if the client is no longer connected (Connected message failed or he is actually gone) delete it*/
-			if(current && !current->Connected() )
+			if(current && !current->get_Connected() )
 			{
 				current = deleteClient(current);
 			}

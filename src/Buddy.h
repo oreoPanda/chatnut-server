@@ -17,16 +17,30 @@ namespace networking
 
 	class Client;
 
+	/*Buddy class
+	 * objects of this class are stored in two places, that is the buddylist and the reversebuddylist of each client
+	 * in buddylist:
+	 * 		client is a pointer to the buddy's client object
+	 * 		clientname is the name of the buddy
+	 * 		iter stays empty
+	 * in reversebuddylist of THIS:
+	 * 		client is a pointer to the client object who has THIS as buddy
+	 * 		clientname is empty
+	 * 		iter is an iterator of the buddy's buddylist*/
 	class Buddy
 	{
 		public:
-			Buddy(std::string const & name);
+			Buddy();
 			~Buddy();
-			void set(Client const * const cli, std::forward_list<Buddy>::iterator const & i);
+			void set(Client * const cli);
+			void set(std::string const & name);
+			void set(std::forward_list<Buddy>::iterator const & i);
+			Client * get_client();
 			std::string const & get_name() const;
+			std::forward_list<Buddy>::iterator const & get_iter() const;
 		private:
-			Client const * client;
-			std::string const clientname;
+			Client * client;
+			std::string clientname;
 			std::forward_list<Buddy>::iterator iter;
 	};
 

@@ -11,7 +11,7 @@ namespace messaging
 {
 
 	Message::Message(std::string const & str, networking::Client * const cur)
-	:message(str), cur(cur)
+	:message(str), current(cur)
 	{
 
 	}
@@ -24,15 +24,6 @@ namespace messaging
 	void Message::send() const
 	{
 		return;
-	}
-
-	void Message::send_signal_connected()
-	{
-		/*set up the message TODO check that it has the right length*/
-		std::string str = CONNECTED + CONNECTED_STR;
-
-		/*send the message*/
-		cur->Send(str);
 	}
 
 } /* namespace messaging */

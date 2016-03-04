@@ -10,8 +10,8 @@
 namespace networking
 {
 
-	Buddy::Buddy(std::string const & name)
-	:client(NULL), clientname(name)
+	Buddy::Buddy()
+	:client(NULL), clientname("")
 	{
 
 	}
@@ -21,9 +21,19 @@ namespace networking
 
 	}
 
-	void Buddy::set(Client const * const cli, std::forward_list<Buddy>::iterator const & i)
+	/*Set a pointer to the client object of buddy and an iterator to an object of reverselist inside the client*/
+	void Buddy::set(Client * const cli)
 	{
 		this->client = cli;
+	}
+
+	void Buddy::set(std::string const & name)
+	{
+		this->clientname = name;
+	}
+
+	void Buddy::set(std::forward_list<Buddy>::iterator const & i)
+	{
 		this->iter = i;
 	}
 
@@ -31,6 +41,16 @@ namespace networking
 	std::string const & Buddy::get_name() const
 	{
 		return this->clientname;
+	}
+
+	Client * Buddy::get_client()
+	{
+		return this->client;
+	}
+
+	std::forward_list<Buddy>::iterator const & Buddy::get_iter() const
+	{
+		return this->iter;
 	}
 
 }	/* namespace networking */
