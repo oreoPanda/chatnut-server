@@ -71,6 +71,9 @@ namespace networking
 		bool get_message(std::string & msg);
 		std::string const & get_name() const;
 		std::forward_list<Buddy>::iterator const add_buddy(std::string const & name);
+                std::forward_list<Buddy>::iterator const get_begin_buddy_iter();
+                std::forward_list<Buddy>::iterator const get_end_buddy_iter();
+                void advance_buddy_iter(std::forward_list<Buddy>::iterator & base) const;
 	private:
 		bool connected;
 		std::ostream * error_stream;

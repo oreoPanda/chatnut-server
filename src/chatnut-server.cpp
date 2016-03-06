@@ -104,16 +104,13 @@ int main(void)
 					std::string msg;
 					if( current->get_message(msg) )
 					{
-						/*TODO evaluate message (or command)*/
 						Command cmd(msg, current, &actions, &reader);
 						if(cmd.isCommand() )
 						{
-							/*TODO command*/
 							cmd.evaluate();
 						}
 						else
 						{
-							/*TODO message*/
 							Message message(msg, current);
 							message.send();
 						}

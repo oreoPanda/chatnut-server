@@ -280,5 +280,22 @@ namespace networking
 		buddylist.push_front(temp);
 		return buddylist.begin();
 	}
+	
+	std::forward_list<Buddy>::iterator const Client::get_begin_buddy_iter()
+	{
+            return buddylist.begin();
+        }
+        
+        std::forward_list<Buddy>::iterator const Client::get_end_buddy_iter()
+	{
+            return buddylist.end();
+        }
+	
+	void Client::advance_buddy_iter(std::forward_list<Buddy>::iterator & base) const
+        {
+            base++;
+            
+            return;
+        }
 
 }	/* namespace networking */
