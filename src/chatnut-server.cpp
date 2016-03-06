@@ -89,7 +89,6 @@ int main(void)
 			}//end horst.check_incoming()
 
 			/*Check if the current client sent any messages or commands*/
-			/*switch to if(current && current->Connected() ) */
 			if(current && current->get_Connected() )
 			{
 				/*handle actions*/

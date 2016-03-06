@@ -10,7 +10,7 @@
 namespace messaging
 {
 
-	/*this Constructor is only used when a new client connects, to send the Connected message*/
+        /*this Constructor is only used when a new client connects, to send the Connected message TODO move to message class*/
 	Command::Command(networking::Client * const cur)
 	:iscmd(false), current(cur), command(""), actionlist(NULL), reader(NULL)
 	{

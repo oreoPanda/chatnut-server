@@ -72,8 +72,8 @@ namespace messaging
 		virtual ~Message();
 		void send() const;
 	private:
-		std::string message;
-		networking::Client *current;
+                std::string const message;
+                networking::Client * const sender;
 	};
 
 } /* namespace messaging */

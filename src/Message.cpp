@@ -11,7 +11,7 @@ namespace messaging
 {
 
 	Message::Message(std::string const & str, networking::Client * const cur)
-	:message(str), current(cur)
+        :message(str), sender(cur)
 	{
 
 	}
@@ -21,6 +21,7 @@ namespace messaging
 
 	}
 
+        /*TODO Instructions in Issue # 10*/
 	void Message::send() const
 	{
 		return;
