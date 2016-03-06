@@ -150,14 +150,28 @@ namespace fileio
 		{
 			//TODO file couldn't be opened
 		}
+		
+		//TODO close file after loading userlist
 
 		return;
 	}
-
-
-	std::string StorageReader::get_message() const
+	
+	/*returns a vector of the filenames inside the receiver's directory*/
+	std::vector<std::string> StorageReader::get_file_list()
 	{
-		return message;
+		std::vector<std::string> filelist;
+
+		if( chdir(receiver.c_str() ) == 0 )
+		{
+			//create a list of all files
+			//http://openbook.rheinwerk-verlag.de/unix_guru/node383.html
+		}
+		else
+		{
+			//TODO error unable to switch into receiver's directory
+		}
+
+		return filelist;
 	}
 
 	/*Look up the password to a given username by scanning TODO binary search.*/

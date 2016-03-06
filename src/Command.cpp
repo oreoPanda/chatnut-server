@@ -143,6 +143,8 @@ namespace messaging
 
 	void Command::login_handle() const
 	{
+                bool login_status = false;
+            
 		if( arguments.size() == 2 )
 		{
 			bool password_correct = reader->check_password_for(this->arguments.at(0), this->arguments.at(1) );
@@ -150,17 +152,34 @@ namespace messaging
 			{
 				this->current->set_Login(true);
 				construct_reply(LOGIN_SUCCESS);
+                                login_status = true;
 			}
 			else
 			{
 				construct_reply(LOGIN_FAILURE);
+                                login_status = false;
 			}
 		}
 		else
 		{
 			construct_reply(LOGIN_FAILURE);
 			construct_reply(NOARG);
+                        login_status = false;
 		}
+		
+		if(login_status == true)
+                {
+                    /*read messages from temporary storage and send them to current*/
+                    reader->set_receiver(arguments.at(0) );
+                    //reader: get filelist
+                    //for each file:
+                        //reader: switch to receiver dir
+                        //reader: read all messages from one file into vector or array (each line one object)
+                        //this: for each object of vector
+                            //current: send message to 
+                        //reader: switch to ../
+                    //move to next
+                }
 	}
 
 	void Command::logout_handle() const
