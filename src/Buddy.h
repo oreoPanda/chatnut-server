@@ -23,10 +23,10 @@ namespace networking
 	 * 		client is a pointer to the buddy's client object
 	 * 		clientname is the name of the buddy
 	 * 		iter stays empty
-	 * in reversebuddylist of a client (here THIS):
-	 * 		client is a pointer to the client object who has THIS as buddy
+         * in reversebuddylist of a client (client is here THIS):
+         * 		client is a pointer to the client object who has THIS as buddy
 	 * 		clientname is empty
-	 * 		iter is an iterator of the buddy's buddylist*/
+         * 		iter is an iterator of the buddylist of client who has THIS as buddy*/
 	class Buddy
 	{
 		public:

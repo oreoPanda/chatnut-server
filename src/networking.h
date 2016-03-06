@@ -82,7 +82,7 @@ namespace networking
 		Client *prev;
 		Client *next;
 		std::forward_list<Buddy> buddylist;
-		std::forward_list<Buddy> reversebuddylist;
+                std::forward_list<Buddy> reversebuddylist;     //rename to backtracebuddylist or something
 		bool receive(std::string & str, unsigned int len);
 		void error(std::string const & msg) const;
 		void error(std::string const & msg, int errnum) const;
@@ -92,7 +92,7 @@ namespace networking
 	/*a storage and information transfer class used for the /who command
          * owner:           pointer to the commanding client
 	 * receivername:    the name of the client requested by /who (the new buddy of the commanding client). It will receive this action.
-	 * iter:            an iterator of the owner's buddylist pointing at the place where the receiver's name and later a pointer to him is stored
+         * iter:            an iterator of the creator's buddylist pointing at the place where the receiver's name and later a pointer to him are stored
          */
 	/*At the moment, each /who creates one action.
          * In the future, there will only be one action per receiver

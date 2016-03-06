@@ -37,17 +37,19 @@ namespace networking
 		this->iter = i;
 	}
 
-	/*returns a reference to the const name of this object*/
+        /*returns pointer to the client*/
+        Client * Buddy::get_client()
+        {
+                return this->client;
+        }
+
+        /*returns a reference to the const clientname*/
 	std::string const & Buddy::get_name() const
 	{
 		return this->clientname;
 	}
 
-	Client * Buddy::get_client()
-	{
-		return this->client;
-	}
-
+        /*returns a reference to the const iter*/
 	std::forward_list<Buddy>::iterator const & Buddy::get_iter() const
 	{
 		return this->iter;

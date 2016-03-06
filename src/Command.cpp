@@ -113,14 +113,18 @@ namespace messaging
 	}
 
 	/*Handles the /who command (surprise! :o)*/
-	/*stores the names of the requested buddies in buddyvector inside the client*/
-	/*creates an Action with an action receiver
-	 * and an iterator pointing to a buddy object inside the buddylist of the sender of the command*/
+        /*stores the names of the requested buddies in buddylist inside the client*/
+        /*creates an Action (see networking.h for Action description)*/
 	void Command::who_handle() const
 	{
-		/*TODO multiple arguments*/
-		std::string argument = arguments.at(0);
-		std::forward_list<networking::Buddy>::iterator const iter = this->current->add_buddy(argument);
+            /*TODO multiple arguments*/
+                //get one argument at the time
+                std::string argument = arguments.at(0);
+
+                //store the argument in a new object of buddylist inside client
+                std::forward_list<networking::Buddy>::iterator const iter = this->current->add_buddy(argument);
+
+                //create the action
 		networking::Action a(this->current, argument, iter);
 		actionlist->push_front(a);
 

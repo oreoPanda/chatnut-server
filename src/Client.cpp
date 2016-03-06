@@ -22,7 +22,7 @@ namespace networking
 		}
 	}
 
-	/*Destructor, close the socket, tell everyone stored in reverselist that this is gone and disconnect this from circle*/
+        /*Destructor, close the socket, tell everyone stored in reversebuddylist that this is gone and disconnect this from circle*/
 	Client::~Client()
 	{
 		/*close the socket*/

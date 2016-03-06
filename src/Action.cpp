@@ -30,7 +30,7 @@ namespace networking    //TODO put back into namespace action
         /*returns the receiver's name*/
 	std::string const & Action::get_receiver() const
 	{
-		return this->receivername;
+            return this->receivername;
 	}
 
 	/*returns the iterator of owner's buddylist*/
