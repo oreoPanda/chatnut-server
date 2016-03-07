@@ -17,12 +17,14 @@ namespace fileio
 	Storage::Storage(std::ostream * const err)
 	:error_stream(err)
 	{
-		std::cout << "Storage Constructor." << std::endl;
+		
 	}
 
+	/*TODO check which constructors and destructors are called in inherited classes*/
+	
 	Storage::~Storage()
 	{
-		std::cout << "Storage Destructor." << std::endl;
+		
 	}
 
 	void Storage::set_receiver(std::string const & rcv)
@@ -40,23 +42,22 @@ namespace fileio
 	/*write an error to the specified error stream*/
 	void Storage::error(std::string const & msg, int errnum) const
 	{
-		*error_stream << "Client error: " << msg << strerror(errnum) << std::endl;
+		*error_stream << "Storage error: " << msg << strerror(errnum) << std::endl;
 	}
 
 	StorageReader::StorageReader(std::ostream * const err)
 	:Storage(err), dir_is_init(false)
 	{
-		std::cout << "StorageReader Constructor." << std::endl;
-
 		/*initialize directory structure*/
 		init_directory_structure();
 
 		/*load userlist*/
+		load_all_users();
 	}
 
 	StorageReader::~StorageReader()
 	{
-		std::cout << "StorageReader Destructor." << std::endl;
+		
 
 		if(file.is_open())
 		{
@@ -105,31 +106,30 @@ namespace fileio
 		std::string password;
 
 		/*open userlist*/
-		file.open("userlist");
+		file.open("users");
 		if(file.is_open() )
 		{
 			/*read usernames and passwords from file and store them in the specified vectors*/
 			while(file.good() )
 			{
+				//username
 				getline(file, username);
 				if(!file.good() )
 				{
 					break;
-
 				}
 
+				//password
 				getline(file, password);
 				/*check badbit and failbit, eofbit doesn't matter here*/
-				if(file.bad() || !file.fail() )
+				if(file.fail() )
 				{
-					this->usernames.pop_back();	//don't store the username if password couldn't be read
 					break;
 				}
-				else
-				{
-					this->usernames.push_back(username);
-					this->passwords.push_back(password);
-				}
+
+				//store them if both were read (break was not called)
+				this->usernames.push_back(username);
+				this->passwords.push_back(password);
 			}//end reading file
 
 			/*check whether file.failbit and/or file.badbit are set*/
@@ -149,6 +149,7 @@ namespace fileio
 		else
 		{
 			//TODO file couldn't be opened
+			Storage::error("The userlist couldn't be opened: ", errno);
 		}
 
 		return;
@@ -226,12 +227,12 @@ namespace fileio
 	StorageWriter::StorageWriter(std::ostream * const err)
 	:Storage(err)
 	{
-		std::cout << "StorageWriter Constructor." << std::endl;
+		
 	}
 
 	StorageWriter::~StorageWriter()
 	{
-		std::cout << "StorageWriter Destructor." << std::endl;
+		
 
 		if(file.is_open())
 		{

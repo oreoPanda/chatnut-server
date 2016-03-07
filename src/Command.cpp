@@ -29,12 +29,13 @@ namespace messaging
 			/*jump behind command that has already been stored*/
 			begin_pos = str.find_first_of(' ') + 1;
 
-			/*strip argument TODO support for multiple arguments*/
-			space_pos = str.find_first_of(' ', begin_pos);
-			if(space_pos != std::string::npos)
+			do
 			{
-				this->arguments.push_back(str.substr(begin_pos, space_pos-1) );
+				space_pos = str.find_first_of(' ', begin_pos);
+				this->arguments.push_back(str.substr(begin_pos, space_pos-begin_pos) );
+				begin_pos = space_pos+1;
 			}
+			while(space_pos != std::string::npos);
 		}
 
 		init_replies();
@@ -158,6 +159,7 @@ namespace messaging
 		}
 		else
 		{
+			//TODO check the order of sending these two commands (depends a little on implementation in the client)
 			construct_reply(LOGIN_FAILURE);
 			construct_reply(NOARG);
 		}
