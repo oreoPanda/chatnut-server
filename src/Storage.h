@@ -39,9 +39,10 @@ namespace fileio
 		~StorageReader();
 		bool init_success() const;
 		void load_all_users();
-                std::vector<std::string> get_file_list();
+		bool user_exists(std::string const & user) const;
+		std::vector<std::string> get_file_list();
 		std::string get_message() const;
-		bool check_password_for(std::string const & username, std::string const & password) const;
+		bool check_password(std::string const & username, std::string const & password) const;
 		bool read();
 	private:
 		std::ifstream file;

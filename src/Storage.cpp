@@ -157,6 +157,25 @@ namespace fileio
 		return;
 	}
 	
+	/*check if a specified user exists by scanning through the usernames vector
+	 * returns true if the specified user exists	TODO binary search
+	 */
+	bool StorageReader::user_exists(std::string const & user) const
+	{
+		bool exists = false;
+
+		for(unsigned int i = 0; i < usernames.size(); i++)
+		{
+			if(user.compare(usernames.at(i) ) == 0)
+			{
+				exists = true;
+				break;
+			}
+		}
+
+		return exists;
+	}
+
 	/*returns a vector of the filenames inside the receiver's directory*/
 	std::vector<std::string> StorageReader::get_file_list()
 	{
@@ -176,7 +195,7 @@ namespace fileio
 	}
 
 	/*Look up the password to a given username by scanning TODO binary search.*/
-	bool StorageReader::check_password_for(std::string const & username, std::string const & password) const
+	bool StorageReader::check_password(std::string const & username, std::string const & password) const
 	{
 		bool password_true = false;
 
