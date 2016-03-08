@@ -79,11 +79,15 @@ int main(void)
 					if(!current)
 					{
 						current = new Client(client_sock, addr, NULL, &logger);
+						/*Send the client the Connected reply along with a short message*/
+						Command welcome_cmd(current, logger);
 					}
 					/*Add client behind current*/
 					else
 					{
 						new Client(client_sock, addr, current, &logger);
+						/*Send the client the Connected reply along with a short message*/
+						Command welcome_cmd(current->Next(), logger);
 					}
 
 					/*Send the client the Connected reply along with a short message*/

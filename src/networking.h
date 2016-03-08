@@ -73,7 +73,7 @@ namespace networking
 		bool check_incoming() const;
 		void Send(std::string const & str);
 		bool get_message(std::string & msg);
-		std::string const & get_name() const;
+		void set_Name(std::string const & n);
 		std::list<Buddy>::iterator const add_buddy(std::string const & name);
 		std::list<Buddy>::iterator const get_begin_buddy_iter();
 		std::list<Buddy>::iterator const get_end_buddy_iter();

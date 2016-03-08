@@ -173,6 +173,7 @@ namespace messaging
 			if(password_correct)
 			{
 				this->current->set_Login(true);
+				this->current->set_Name(arguments.at(0) );
 				construct_reply(LOGIN_SUCCESS, arguments.at(0) );
 				login_status = true;
 				logger.log("Login handler", "Logged in user" + arguments.at(0) );

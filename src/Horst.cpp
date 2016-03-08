@@ -106,7 +106,7 @@ namespace networking
 
 		memset(&client_address, 0, sizeof(client_address));
 
-		client = accept(sock, reinterpret_cast< struct sockaddr * >(&client_address), &length);
+		client = accept(this->sock, reinterpret_cast< struct sockaddr * >(&client_address), &length);
 		if(client == -1)
 		{
 			memset(&addr, 0, sizeof(addr));
@@ -115,7 +115,7 @@ namespace networking
 		}
 		else
 		{
-			//TODO log a message
+			logger.log("Horst", "Accepted connection to another client");
 			return client;
 		}
 	}

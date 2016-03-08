@@ -175,7 +175,7 @@ namespace networking
 	/*check for an incoming message*/
 	bool Client::check_incoming() const
 	{
-		return helpers::check_incoming(sock, this->logger, "Client");
+		return helpers::check_incoming(this->sock, this->logger, "Client");
 	}
 
 	/*receive a message*/
@@ -280,9 +280,9 @@ namespace networking
 		}
 	}
 
-	std::string const & Client::get_name() const
+	void Client::set_Name(std::string const & n)
 	{
-		return this->name;
+		this->name = n;
 	}
 
 	std::list<Buddy>::iterator const Client::add_buddy(std::string const & name)
