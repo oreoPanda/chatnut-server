@@ -156,11 +156,11 @@ namespace networking
 	{
 		std::list<Buddy>::iterator buddylistiter = buddylist.begin();
 		/*communicate to others that this no longer has buddies*/
-		do
+		while(buddylistiter != buddylist.end() )
 		{
 			buddylistiter->get_client()->remove_from_reversebuddylist(buddylistiter->get_iter() );
 			buddylistiter++;
-		}while(buddylistiter != buddylist.end() );
+		}
 
 		/*clear buddylist*/
 		buddylist.clear();

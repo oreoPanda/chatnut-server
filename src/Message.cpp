@@ -30,7 +30,15 @@ namespace messaging
 		//send the message to each buddy
 		while(buddyiter != sender->get_end_buddy_iter() )
 		{
-			buddyiter->get_client()->Send(message);
+			if(buddyiter->get_client() )
+			{
+				//send message to buddy
+				buddyiter->get_client()->Send(message);
+			}
+			else
+			{
+				//TODO store message on server
+			}
 			sender->advance_buddy_iter(buddyiter);
 		}
 

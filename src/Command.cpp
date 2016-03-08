@@ -113,9 +113,9 @@ namespace messaging
 		construct_reply(CONNECTED);
 	}
 
-	/*Handles the /who command (surprise! :o)*/
-        /*stores the names of the requested buddies in buddylist inside the client*/
-        /*creates an Action (see networking.h for Action description)*/
+	/*Handles the /who command (surprise! :o)
+	 * stores the names of the requested buddies in buddylist inside the client
+	 * creates an Action (see networking.h for Action description)*/
 	void Command::who_handle() const
 	{
 		/*TODO multiple arguments*/
@@ -129,7 +129,7 @@ namespace messaging
 		networking::Action a(this->current, argument, iter);		//TODO rename current to commander
 		actionlist->push_front(a);
 
-		/*TODO send an adequate reply*/
+		construct_reply(BUDDY_IS_SET);
 	}
 
 	/*Handles the /unwho command (surprise! :o)
@@ -138,6 +138,8 @@ namespace messaging
 	void Command::unwho_handle() const
 	{
 		current->clear_buddylist();
+
+		construct_reply(BUDDY_IS_UNSET);
 	}
 
 	void Command::lookup_handle() const
