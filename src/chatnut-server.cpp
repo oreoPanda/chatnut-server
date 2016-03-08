@@ -18,6 +18,7 @@ using namespace messaging;
 using namespace networking;
 
 //TODO this server can recognize closed connections but I'm not quite sure about broken connections
+//TODO why can two instances of this server run at the same time without complaining about port or address already in use?
 
 /*delete a client (the one given in argument) and return the previous one or NULL*/
 Client * deleteClient(Client * current)
