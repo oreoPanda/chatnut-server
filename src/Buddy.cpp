@@ -22,26 +22,26 @@ namespace networking
 	}
 
 	/*Set a pointer to the client object of buddy and an iterator to an object of reverselist inside the client*/
-	void Buddy::set(Client * const cli)
+	void Buddy::set_client(Client * const cli)
 	{
 		this->client = cli;
 	}
 
-	void Buddy::set(std::string const & name)
+	void Buddy::set_name(std::string const & name)
 	{
 		this->clientname = name;
 	}
 
-	void Buddy::set(std::forward_list<Buddy>::iterator const & i)
+	void Buddy::set_iter(std::list<Buddy>::iterator const & i)
 	{
 		this->iter = i;
 	}
 
-        /*returns pointer to the client*/
-        Client * Buddy::get_client()
-        {
-                return this->client;
-        }
+	/*returns pointer to the client*/
+	Client * Buddy::get_client()
+	{
+		return this->client;
+	}
 
         /*returns a reference to the const clientname*/
 	std::string const & Buddy::get_name() const
@@ -50,7 +50,7 @@ namespace networking
 	}
 
         /*returns a reference to the const iter*/
-	std::forward_list<Buddy>::iterator const & Buddy::get_iter() const
+	std::list<Buddy>::iterator const & Buddy::get_iter() const
 	{
 		return this->iter;
 	}

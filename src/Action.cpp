@@ -10,7 +10,7 @@
 namespace networking    //TODO put back into namespace action
 {
 
-	Action::Action(Client * const creator, std::string const & recv_name, std::forward_list<Buddy>::iterator const & i)
+	Action::Action(Client * const creator, std::string const & recv_name, std::list<Buddy>::iterator const & i)
         :creator(creator), receivername(recv_name), iter(i)
 	{
 
@@ -34,7 +34,7 @@ namespace networking    //TODO put back into namespace action
 	}
 
 	/*returns the iterator of owner's buddylist*/
-	std::forward_list<Buddy>::iterator const & Action::get_buddy_iter() const
+	std::list<Buddy>::iterator const & Action::get_buddy_iter() const
 	{
 		return this->iter;
 	}

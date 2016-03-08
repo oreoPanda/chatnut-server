@@ -8,7 +8,9 @@
 #ifndef NETWORKING_H_
 #define NETWORKING_H_
 
+#include <forward_list>
 #include <iostream>	//for std::endl
+#include <list>
 #include <vector>
 
 #include <stdlib.h>
@@ -60,20 +62,23 @@ namespace networking
 		void setPrev(Client * p);
 		void setNext(Client * n);
 
+		//TODO check order of functions
 		bool get_Connected() const;
 		void set_Login(bool status);
 		bool get_Login() const;
 		void handle_actions(std::forward_list<Action> & actions);
-		void set_buddy_data(std::forward_list<Buddy>::iterator const & buddy, Client * const cli);
-		void unset_buddy_ptr(std::forward_list<Buddy>::iterator const & buddy);
+		void set_buddy_data(std::list<Buddy>::iterator const & buddy, Client * const cli, std::list<Buddy>::iterator const & iter);
+		void unset_buddy_ptr(std::list<Buddy>::iterator const & buddy);
+		void clear_buddylist();
+		void remove_from_reversebuddylist(std::list<Buddy>::iterator const & reverselistiter);
 		bool check_incoming() const;
 		void Send(std::string const & str);
 		bool get_message(std::string & msg);
 		std::string const & get_name() const;
-		std::forward_list<Buddy>::iterator const add_buddy(std::string const & name);
-                std::forward_list<Buddy>::iterator const get_begin_buddy_iter();
-                std::forward_list<Buddy>::iterator const get_end_buddy_iter();
-                void advance_buddy_iter(std::forward_list<Buddy>::iterator & base) const;
+		std::list<Buddy>::iterator const add_buddy(std::string const & name);
+		std::list<Buddy>::iterator const get_begin_buddy_iter();
+		std::list<Buddy>::iterator const get_end_buddy_iter();
+		void advance_buddy_iter(std::list<Buddy>::iterator & base) const;
 	private:
 		bool connected;
 		std::ostream * error_stream;
@@ -84,8 +89,8 @@ namespace networking
 		std::string name;
 		Client *prev;
 		Client *next;
-		std::forward_list<Buddy> buddylist;
-                std::forward_list<Buddy> reversebuddylist;     //rename to backtracebuddylist or something
+		std::list<Buddy> buddylist;		//TODO turn into a forward_list
+		std::list<Buddy> reversebuddylist;     //TODO rename to backtracebuddylist or something
 		bool receive(std::string & str, unsigned int len);
 		void error(std::string const & msg) const;
 		void error(std::string const & msg, int errnum) const;
@@ -105,15 +110,15 @@ namespace networking
 	class Action
 	{
 	public:
-                Action(Client * const creator, std::string const & recv_name, std::forward_list<Buddy>::iterator const & i);
+                Action(Client * const creator, std::string const & recv_name, std::list<Buddy>::iterator const & i);
 		~Action();
                 Client * get_creator();
 		std::string const & get_receiver() const;
-		std::forward_list<Buddy>::iterator const & get_buddy_iter() const;
+		std::list<Buddy>::iterator const & get_buddy_iter() const;
 	private:
 		Client * const creator;
                 std::string const receivername;
-		std::forward_list<Buddy>::iterator const iter;
+		std::list<Buddy>::iterator const iter;
 	};
 
 }

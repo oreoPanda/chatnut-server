@@ -22,7 +22,7 @@ namespace networking
 		}
 	}
 
-        /*Destructor, close the socket, tell everyone stored in reversebuddylist that this is gone and disconnect this from circle*/
+	/*Destructor, close the socket, tell everyone stored in reversebuddylist that this is gone and disconnect this from circle*/
 	Client::~Client()
 	{
 		/*close the socket*/
@@ -36,12 +36,12 @@ namespace networking
 		}
 
 		/*inform reverse clients that this is gone*/
-		std::forward_list<Buddy>::iterator reverseiter;
+		std::list<Buddy>::iterator reverseiter;
 		reverseiter = reversebuddylist.begin();
 		while(reverseiter != reversebuddylist.end() )
 		{
 			reverseiter->get_client()->unset_buddy_ptr(reverseiter->get_iter() );
-                        reverseiter++;
+			reverseiter++;
 			reversebuddylist.pop_front();
 		}
 
@@ -103,12 +103,15 @@ namespace networking
 			if( (i->get_receiver().compare(this->name) ) == 0 )
 			{
 				/*create a new buddy object and add it to our reverselist*/
-                                Buddy temp;
-                                temp.set(i->get_creator() );
-                                temp.set(i->get_buddy_iter() );
+				Buddy temp;
+				temp.set_client(i->get_creator() );
+				temp.set_iter(i->get_buddy_iter() );
 				reversebuddylist.push_front(temp);
-				/*tell the owner of the action who we are and where to find himself in our reverselist (for when he leaves)*/
-                                i->get_creator()->set_buddy_data(reversebuddylist.begin(), this);
+
+				/*tell the owner of the action where he stored us,
+				 * who we are and where to find himself in our reverselist (for when he leaves or sends /unwho)*/
+				i->get_creator()->set_buddy_data(i->get_buddy_iter(), this, this->reversebuddylist.begin() );
+
 				/*remove the action from list*/
 				if(i == actions.begin() )
 				{
@@ -131,17 +134,42 @@ namespace networking
 		return;
 	}
 
-	/*set the Client pointer of a buddy object stored in buddylist. This is usually called by buddy when he checks actions from this*/
-	void Client::set_buddy_data(std::forward_list<Buddy>::iterator const & buddy, Client * const cli)
+	/*in buddylist at position buddy, set client and iterator of buddy object*/
+	void Client::set_buddy_data(std::list<Buddy>::iterator const & buddy, Client * const cli, std::list<Buddy>::iterator const & iter)
 	{
-                buddy->set(cli);
+		buddy->set_client(cli);
+		buddy->set_iter(iter);
 		return;
 	}
 
-	void Client::unset_buddy_ptr(std::forward_list<Buddy>::iterator const & buddy)
+	/*remove the client pointer from buddylist at position that buddy points at
+	 * won't remove the iter, but iter shall not be used anyways because it doesn't point at anything valuable anymore*/
+	void Client::unset_buddy_ptr(std::list<Buddy>::iterator const & buddy)
 	{
-		buddy->set(NULL);		//TODO check that the right overload is used
+		buddy->set_client(NULL);
 		return;
+	}
+
+	/*communicate to all buddies that they can remove this from his reversebuddylist,
+	 * then clear buddylist*/
+	void Client::clear_buddylist()
+	{
+		std::list<Buddy>::iterator buddylistiter = buddylist.begin();
+		/*communicate to others that this no longer has buddies*/
+		do
+		{
+			buddylistiter->get_client()->remove_from_reversebuddylist(buddylistiter->get_iter() );
+			buddylistiter++;
+		}while(buddylistiter != buddylist.end() );
+
+		/*clear buddylist*/
+		buddylist.clear();
+	}
+
+	/*Removes the element that reverselistiter points at from reversebuddylist*/
+	void Client::remove_from_reversebuddylist(std::list<Buddy>::iterator const & reverselistiter)
+	{
+		reversebuddylist.erase(reverselistiter);
 	}
 
 	/*check for an incoming message*/
@@ -273,29 +301,29 @@ namespace networking
 		*log_stream << "Client: " << msg << std::endl;
 	}
 
-	std::forward_list<Buddy>::iterator const Client::add_buddy(std::string const & name)
+	std::list<Buddy>::iterator const Client::add_buddy(std::string const & name)
 	{
 		Buddy temp;
-                temp.set(name);
+		temp.set_name(name);
 		buddylist.push_front(temp);
 		return buddylist.begin();
 	}
 	
-	std::forward_list<Buddy>::iterator const Client::get_begin_buddy_iter()
+	std::list<Buddy>::iterator const Client::get_begin_buddy_iter()
 	{
-            return buddylist.begin();
-        }
+		return buddylist.begin();
+	}
         
-        std::forward_list<Buddy>::iterator const Client::get_end_buddy_iter()
+        std::list<Buddy>::iterator const Client::get_end_buddy_iter()
 	{
-            return buddylist.end();
-        }
+        	return buddylist.end();
+	}
 	
-	void Client::advance_buddy_iter(std::forward_list<Buddy>::iterator & base) const
-        {
-            base++;
-            
-            return;
-        }
+	void Client::advance_buddy_iter(std::list<Buddy>::iterator & base) const
+	{
+		base++;
+
+		return;
+	}
 
 }	/* namespace networking */

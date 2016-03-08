@@ -117,23 +117,26 @@ namespace messaging
         /*creates an Action (see networking.h for Action description)*/
 	void Command::who_handle() const
 	{
-            /*TODO multiple arguments*/
-                //get one argument at the time
-                std::string argument = arguments.at(0);
+		/*TODO multiple arguments*/
+		//get one argument at the time
+		std::string argument = arguments.at(0);
 
-                //store the argument in a new object of buddylist inside client
-                std::forward_list<networking::Buddy>::iterator const iter = this->current->add_buddy(argument);
+		//store the argument in a new object of buddylist inside client
+		std::list<networking::Buddy>::iterator const iter = this->current->add_buddy(argument);
 
-                //create the action
-		networking::Action a(this->current, argument, iter);
+		//create the action
+		networking::Action a(this->current, argument, iter);		//TODO rename current to commander
 		actionlist->push_front(a);
 
 		/*TODO send an adequate reply*/
 	}
 
+	/*Handles the /unwho command (surprise! :o)
+	 * clear the buddylist of current
+	 * for each object in the buddylist, */
 	void Command::unwho_handle() const
 	{
-
+		current->clear_buddylist();
 	}
 
 	void Command::lookup_handle() const
