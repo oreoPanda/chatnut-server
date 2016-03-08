@@ -8,11 +8,13 @@
 #ifndef STORAGE_H_
 #define STORAGE_H_
 
-#include <string.h>
-#include <sys/stat.h>	//for mkdir	TODO check for a c++ way to chdir() and mkdir()
-
 #include <fstream>
 #include <vector>
+#include <string.h>
+#include <sys/stat.h>	//for mkdir	TODO check for a c++ way to chdir() and mkdir()
+#include <unistd.h>
+
+#include "LogWriter.h"
 
 namespace fileio
 {
@@ -20,22 +22,22 @@ namespace fileio
 	class Storage
 	{
 	public:
-		Storage(std::ostream * const err);
+		Storage(fileio::LogWriter & logger, std::string const & home);
 		virtual ~Storage();
 		void set_receiver(std::string const & rcv);
 		void set_sender(std::string const & snd);
-		void error(std::string const & msg, int errnum) const;
 	protected:
 		std::string message;
 		std::string receiver;
 		std::string sender;
-		std::ostream * const error_stream;
+		fileio::LogWriter & logger;
+		std::string const home;
 	};
 
 	class StorageReader: public Storage
 	{
 	public:
-		StorageReader(std::ostream * const err);
+		StorageReader(fileio::LogWriter & logger, std::string const & home);
 		~StorageReader();
 		bool init_success() const;
 		void load_all_users();
@@ -49,14 +51,14 @@ namespace fileio
 		bool dir_is_init;
 		std::vector<std::string> usernames;
 		std::vector<std::string> passwords;
-                
-                void init_directory_structure();
+
+		void init_directory_structure();
 	};
 
 	class StorageWriter: public Storage
 	{
 	public:
-		StorageWriter(std::ostream * const err);
+		StorageWriter(fileio::LogWriter & logger, std::string const & home);
 		~StorageWriter();
 		void set_message(std::string const & msg);
 		bool write();

@@ -11,7 +11,7 @@ namespace helpers
 {
 
 	/*check for a connection request or an incoming message*/
-	bool check_incoming(socket_t sock, std::ostream * err, std::string const & className)
+	bool check_incoming(socket_t sock, fileio::LogWriter & logger, std::string const & className)
 	{
 		fd_set readfds;
 		struct timeval timeout;
@@ -24,10 +24,10 @@ namespace helpers
 		timeout.tv_usec = 10.000; //microseconds: 1,000,000 of them each second, here process will sleep for one 100th of a second
 		highestfd = sock;
 
-		//FIXME timeouts with select() (and getch())
+		//FIXME TODO timeouts with select() (and getch())	<-- not quite sure what I meant by that, it's long ago. Timeout length?
 		if( select (highestfd+1, &readfds, NULL, NULL, &timeout) == -1)	//select() needs highest numbered fd + 1
 		{
-			*err << className << " error: Could not check for incoming data: " << strerror(errno) << std::endl;
+			logger.error(className, "Unable to check for incoming data", errno);
 			return false;
 		}
 		else if( FD_ISSET (sock, &readfds) )	//if a connection is waiting

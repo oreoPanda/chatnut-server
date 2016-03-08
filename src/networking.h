@@ -21,6 +21,7 @@
 #include <errno.h>
 
 #include "Buddy.h"
+#include "LogWriter.h"
 
 typedef int socket_t;
 
@@ -33,13 +34,12 @@ namespace networking
 	class Horst //Beckmann     //TODO this could potentially be hazardous
 	{
 	public:
-		Horst(std::ostream * err, unsigned short port, int max);
+		Horst(unsigned short port, int max, fileio::LogWriter & logger);
 		~Horst();
 		bool init_success() const;
 		socket_t accept_connection(struct sockaddr_in & addr) const;
 		bool check_incoming() const;
 	private:
-		std::ostream * error_stream;
 		socket_t sock;
 		struct sockaddr_in address;
 		int num_of_clients;
@@ -47,14 +47,13 @@ namespace networking
 		bool open;
 		bool usable;
 		bool listening;
-		void error(std::string const & msg, int errnum) const;
-		/*void log(std::string const & msg) const;*/
+		fileio::LogWriter & logger;
 	};
 
 	class Client
 	{
 	public:
-		Client(std::ostream * err, std::ostream * log, socket_t const sock, struct sockaddr_in const addr, Client * p);
+		Client(socket_t const sock, struct sockaddr_in const addr, Client * const p = NULL, fileio::LogWriter * const logger = NULL);
 		~Client();
 
 		Client * Prev() const;
@@ -81,8 +80,6 @@ namespace networking
 		void advance_buddy_iter(std::list<Buddy>::iterator & base) const;
 	private:
 		bool connected;
-		std::ostream * error_stream;
-		std::ostream * log_stream;
 		socket_t sock;
 		struct sockaddr_in address;
 		bool login_status;
@@ -91,10 +88,8 @@ namespace networking
 		Client *next;
 		std::list<Buddy> buddylist;		//TODO turn into a forward_list
 		std::list<Buddy> reversebuddylist;     //TODO rename to backtracebuddylist or something
+		fileio::LogWriter & logger;
 		bool receive(std::string & str, unsigned int len);
-		void error(std::string const & msg) const;
-		void error(std::string const & msg, int errnum) const;
-		void log(std::string const & msg) const;
 	};
 
 	/*a storage and information transfer class used for the /who command
@@ -127,7 +122,7 @@ namespace networking
 namespace helpers
 {
 
-	bool check_incoming(socket_t sock, std::ostream * err, std::string const & className);
+	bool check_incoming(socket_t sock, fileio::LogWriter & logger, std::string const & className);
 
 }
 

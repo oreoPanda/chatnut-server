@@ -8,6 +8,7 @@
 #include <string>
 
 #include "Getch.h"
+#include "LogWriter.h"
 #include "messaging.h"
 #include "networking.h"
 #include "Storage.h"
@@ -46,7 +47,8 @@ Client * deleteClient(Client * current)
 int main(void)
 {
 	Client * current = NULL;
-	StorageReader reader(&std::cerr);
+	LogWriter logger(std::cerr, std::clog);
+	StorageReader reader(logger, getenv("HOME") );
 
 	/*only go on if directory initialization was successful*/
 	if(reader.init_success() == false)
@@ -55,7 +57,7 @@ int main(void)
 	}
 
 	/*Initialize host class*/
-	Horst horst(&std::cerr, 1234, 10);
+	Horst horst(1234, 100, logger);	//TODO Caution: 100 clients is a low limit
 	if( horst.init_success() )
 	{
 		/*Create action list*/
@@ -75,16 +77,16 @@ int main(void)
 					/*Add first client*/
 					if(!current)
 					{
-						current = new Client(&std::cerr, &std::clog, client_sock, addr, NULL);
+						current = new Client(client_sock, addr, NULL, &logger);
 					}
 					/*Add client behind current*/
 					else
 					{
-						new Client(&std::cerr, &std::clog, client_sock, addr, current);
+						new Client(client_sock, addr, current, &logger);
 					}
 
 					/*Send the client the Connected reply along with a short message*/
-					Command welcome_cmd(current);
+					Command welcome_cmd(current, logger);
 				}
 			}//end horst.check_incoming()
 
@@ -104,7 +106,7 @@ int main(void)
 					std::string msg;
 					if( current->get_message(msg) )
 					{
-						Command cmd(msg, current, &actions, &reader);
+						Command cmd(msg, current, &actions, &reader, logger);
 						if(cmd.isCommand() )
 						{
 							cmd.evaluate();

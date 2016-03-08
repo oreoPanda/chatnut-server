@@ -1,8 +1,8 @@
 #Makefile
 
 objects-debug = Action-debug.o Buddy-debug.o chatnut-server-debug.o Client-debug.o Command-debug.o\
-				Getch-debug.o helpers-debug.o Horst-debug.o Message-debug.o Storage-debug.o
-objects = Action.o Buddy.o chatnut-server.o Client.o Command.o Getch.o helpers.o Horst.o Message.o Storage.o
+				Getch-debug.o helpers-debug.o Horst-debug.o LogWriter-debug.o Message-debug.o Storage-debug.o
+objects = Action.o Buddy.o chatnut-server.o Client.o Command.o Getch.o helpers.o Horst.o LogWriter.o Message.o Storage.o
 compiler = g++
 cflags = -Wall -Wextra -std=c++0x
 

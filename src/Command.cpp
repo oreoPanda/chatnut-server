@@ -11,15 +11,15 @@ namespace messaging
 {
 
         /*this Constructor is only used when a new client connects, to send the Connected message TODO move to message class*/
-	Command::Command(networking::Client * const cur)
-	:iscmd(false), current(cur), command(""), actionlist(NULL), reader(NULL)
+	Command::Command(networking::Client * const cur, fileio::LogWriter & logger)
+	:iscmd(false), current(cur), command(""), actionlist(NULL), reader(NULL), logger(logger)
 	{
 		this->replies.push_back("Connected\n");
 		connected_handle();
 	}
 
-	Command::Command(std::string const str, networking::Client * const cur, std::forward_list<networking::Action> *actionsptr, fileio::StorageReader * const r)
-	:iscmd( str[0] == '/' ? true:false ), current(cur), command(str.substr(1,str.find_first_of(' ')-1) ), actionlist(actionsptr), reader(r)
+	Command::Command(std::string const str, networking::Client * const cur, std::forward_list<networking::Action> *actionsptr, fileio::StorageReader * const r, fileio::LogWriter & logger)
+	:iscmd( str[0] == '/' ? true:false ), current(cur), command(str.substr(1,str.find_first_of(' ')-1) ), actionlist(actionsptr), reader(r), logger(logger)
 	{
 		if(this->iscmd)
 		{
@@ -173,11 +173,13 @@ namespace messaging
 				this->current->set_Login(true);
 				construct_reply(LOGIN_SUCCESS, arguments.at(0) );
 				login_status = true;
+				logger.log("Login handler", "Logged in user" + arguments.at(0) );
 			}
 			else
 			{
 				construct_reply(LOGIN_FAILURE);
 				login_status = false;
+				logger.error("Login handler", "Couldn't log in user" + arguments.at(0) );
 			}
 		}
 		else
@@ -186,6 +188,7 @@ namespace messaging
 			construct_reply(LOGIN_FAILURE);
 			construct_reply(NOARG);
 			login_status = false;
+			logger.error("Login handler", "Couldn't log in user" + arguments.at(0) + ": Wrong number of arguments." );
 		}
 		
 		if(login_status == true)

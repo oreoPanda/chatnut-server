@@ -11,6 +11,7 @@
 #include <forward_list>
 #include <vector>
 
+#include "LogWriter.h"
 #include "networking.h"
 #include "Storage.h"
 
@@ -41,8 +42,8 @@ namespace messaging
 	class Command
 	{
 	public:
-		Command(networking::Client * const cur);
-		Command(std::string const str, networking::Client * const cur, std::forward_list<networking::Action> * actionsptr, fileio::StorageReader * const r);
+		Command(networking::Client * const cur, fileio::LogWriter & logger);
+		Command(std::string const str, networking::Client * const cur, std::forward_list<networking::Action> * actionsptr, fileio::StorageReader * const r, fileio::LogWriter & logger);
 		virtual ~Command();
 		bool isCommand() const;
 		void evaluate() const;
@@ -54,6 +55,7 @@ namespace messaging
 		std::vector<std::string> arguments;	//TODO maybe change to array, maybe const?
 		std::forward_list<networking::Action> * actionlist;
 		fileio::StorageReader * const reader;
+		fileio::LogWriter & logger;
 		void init_replies();
 		void connected_handle() const;
 		void who_handle() const;

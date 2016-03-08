@@ -11,8 +11,8 @@ namespace networking
 {
 
 	/*Constructor, connect this to circle*/
-	Client::Client(std::ostream * err, std::ostream * log, socket_t const sock, struct sockaddr_in const addr, Client * const p = NULL)
-	:connected(true), error_stream(err), log_stream(log), sock(sock), address(addr), login_status(false), name(""), prev(p?p:this), next(p?p->Next():this)
+	Client::Client(socket_t const sock, struct sockaddr_in const addr, Client * const p, fileio::LogWriter * const logger)
+	:connected(true), sock(sock), address(addr), login_status(false), name(""), prev(p?p:this), next(p?p->Next():this), logger(*logger)
 	{
 		/*edit the prev and next pointers of the adjacent objects in circle*/
 		if(p)
@@ -32,7 +32,7 @@ namespace networking
 		}
 		else
 		{
-			error("Could not close socket: ", errno);
+			logger.error("Client", "Unable to close socket", errno);
 		}
 
 		/*inform reverse clients that this is gone*/
@@ -175,7 +175,7 @@ namespace networking
 	/*check for an incoming message*/
 	bool Client::check_incoming() const
 	{
-		return helpers::check_incoming(sock, error_stream, "Client");
+		return helpers::check_incoming(sock, this->logger, "Client");
 	}
 
 	/*receive a message*/
@@ -198,7 +198,7 @@ namespace networking
 		}
 		else if(status == 0 && len != 0)
 		{
-			log("Client has left, closing connection.");
+			logger.log("Client", "Client has left, closing connection");
 			connected = false;
 			free(str_c);
 			return false;
@@ -206,14 +206,14 @@ namespace networking
 		/*TODO evaluate errno to see if client may have disconnected*/
 		else if(status == -1)
 		{
-			error("Could not receive message: ", errno);
+			logger.error("Client", "Unable to receive message", errno);
 			//connected = false;
 			free(str_c);
 			return false;
 		}
 		else
 		{
-			error("Could not receive complete message.");
+			logger.error("Client", "Unable to receive complete message");
 			str = str_c;
 			free(str_c);
 			return true;
@@ -236,14 +236,14 @@ namespace networking
 		/*TODO evaluate errno to see if client may have disconnected*/
 		else if(status == -1)
 		{
-			error("Could not send message: ", errno);
+			logger.error("Client", "Unable to send message", errno);
 			connected = false;
 			return;
 		}
 		/*TODO rather another try instead of setting connected to false*/
 		else
 		{
-			error("Could not send complete message.");
+			logger.error("Client", "Unable to send complete message");
 			connected = false;
 			return;
 		}
@@ -285,22 +285,6 @@ namespace networking
 		return this->name;
 	}
 
-	void Client::error(std::string const & msg) const
-	{
-		*error_stream << "Client error: " << msg << std::endl;
-	}
-
-	/*write an error to the specified error stream*/
-	void Client::error(std::string const & msg, int errnum) const
-	{
-		*error_stream << "Client error: " << msg << strerror(errnum) << std::endl;
-	}
-
-	void Client::log(std::string const & msg) const
-	{
-		*log_stream << "Client: " << msg << std::endl;
-	}
-
 	std::list<Buddy>::iterator const Client::add_buddy(std::string const & name)
 	{
 		Buddy temp;
@@ -314,9 +298,9 @@ namespace networking
 		return buddylist.begin();
 	}
         
-        std::list<Buddy>::iterator const Client::get_end_buddy_iter()
+	std::list<Buddy>::iterator const Client::get_end_buddy_iter()
 	{
-        	return buddylist.end();
+		return buddylist.end();
 	}
 	
 	void Client::advance_buddy_iter(std::list<Buddy>::iterator & base) const

@@ -5,17 +5,13 @@
  *      Author: i_fly_gliders
  */
 
-#include <iostream>
-#include <unistd.h>
-#include <errno.h>
-
 #include "Storage.h"
 
 namespace fileio
 {
 
-	Storage::Storage(std::ostream * const err)
-	:error_stream(err)
+	Storage::Storage(fileio::LogWriter & logger, std::string const & home)
+	:logger(logger), home(home)
 	{
 		
 	}
@@ -39,14 +35,8 @@ namespace fileio
 		return;
 	}
 
-	/*write an error to the specified error stream*/
-	void Storage::error(std::string const & msg, int errnum) const
-	{
-		*error_stream << "Storage error: " << msg << strerror(errnum) << std::endl;
-	}
-
-	StorageReader::StorageReader(std::ostream * const err)
-	:Storage(err), dir_is_init(false)
+	StorageReader::StorageReader(fileio::LogWriter & logger, std::string const & home)
+	:Storage(logger, home), dir_is_init(false)
 	{
 		/*initialize directory structure*/
 		init_directory_structure();
@@ -67,9 +57,9 @@ namespace fileio
 
 	void StorageReader::init_directory_structure()
 	{
-		if( chdir(getenv("HOME")) != 0 )
+		if( chdir(this->home.c_str()) != 0 )
 		{
-			fprintf( stderr, "Error switching into your home directory: %s\n", strerror(errno) );
+			logger.error("Storage Reader", "Unable to switch to " + this->home, errno);
 			this->dir_is_init = false;
 			return;
 		}
@@ -78,14 +68,14 @@ namespace fileio
 			if( errno != EEXIST )
 			{
 				//TODO error in parent class Storage
-				error("Error creating directory .chatnut-server in your home directory", errno );
+				logger.error("Storage Reader", "Unable to create directory " + this->home + "/.chatnut-server", errno );
 				this->dir_is_init = false;
 				return;
 			}
 		}
 		if( chdir(".chatnut-server") != 0 )
 		{
-			fprintf( stderr, "Error switching to .chatnut-server in your home directory: %s\n", strerror(errno) );
+			logger.error("Storage Reader", "Unable to switch to " + this->home + "/.chatnut-server", errno);
 			this->dir_is_init = false;
 			return;
 		}
@@ -149,7 +139,7 @@ namespace fileio
 		else
 		{
 			//TODO file couldn't be opened
-			Storage::error("The userlist couldn't be opened: ", errno);
+			logger.error("Storage Reader", "Unable to open userlist at " + this->home + "/.chatnut-server/users", errno);
 		}
 		
 		//TODO close file after loading userlist
@@ -257,8 +247,8 @@ namespace fileio
 		}
 	}
 
-	StorageWriter::StorageWriter(std::ostream * const err)
-	:Storage(err)
+	StorageWriter::StorageWriter(fileio::LogWriter & logger, std::string const & home)
+	:Storage(logger, home)
 	{
 		
 	}

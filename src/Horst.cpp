@@ -13,17 +13,9 @@ namespace networking
 {
 
 	/*Constructor, open socket and set it reusable*/
-	Horst::Horst(std::ostream * err, unsigned short port, int max)
+	Horst::Horst(unsigned short port, int max, fileio::LogWriter & logger)
+	:sock(socket(AF_INET, SOCK_STREAM, 0)), num_of_clients(0), max_num_of_clients(max), open(false), usable(false), listening(false), logger(logger)
 	{
-		error_stream = err;
-		sock = socket(AF_INET, SOCK_STREAM, 0);
-		memset(&address, 0, sizeof(address) );
-		num_of_clients = 0;
-		max_num_of_clients = max;
-		open = false;
-		usable = false;
-		listening = false;
-
 		/*check if socket is open now*/
 		if(sock != -1)
 		{
@@ -31,7 +23,7 @@ namespace networking
 		}
 		else
 		{
-			error("Could not create socket: ", errno);
+			logger.error("Horst", "Unable to create socket", errno);
 		}
 
 		/*set socket reusable*/
@@ -42,7 +34,7 @@ namespace networking
 		}
 		else
 		{
-			error("Could not set socket options: ", errno);
+			logger.error("Horst", "Unable to set socket options", errno);
 		}
 
 		/*bind socket to the correct port*/
@@ -60,7 +52,7 @@ namespace networking
 		}
 		else
 		{
-			error("Socket cannot listen: ", errno);
+			logger.error("Horst", "Unable to start listening on socket", errno);
 		}
 	}
 
@@ -83,7 +75,7 @@ namespace networking
 				open = true;
 				usable = false;
 				listening = false;
-				error("Could not close socket: ", errno);
+				logger.error("Horst", "Unable to close socket", errno);
 			}
 		}
 		else
@@ -118,7 +110,7 @@ namespace networking
 		if(client == -1)
 		{
 			memset(&addr, 0, sizeof(addr));
-			error("Could not accept connection: ", errno);
+			logger.error("Horst", "Unable to accept connection", errno);
 			return -1;
 		}
 		else
@@ -131,18 +123,7 @@ namespace networking
 	/*check for a connection request*/
 	bool Horst::check_incoming() const
 	{
-		return helpers::check_incoming(sock, error_stream, "Horst");
+		return helpers::check_incoming(sock, logger, "Horst");
 	}
-
-	/*write an error to the specified error stream*/
-	void Horst::error(std::string const & msg, int errnum) const
-	{
-		*error_stream << "Horst error: " << msg << strerror(errnum) << std::endl;
-	}
-
-	/*void Horst::log(std::string const & msg) const
-	{
-
-	}*/
 
 } /* namespace networking */
