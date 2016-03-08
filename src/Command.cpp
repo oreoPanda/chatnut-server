@@ -29,12 +29,13 @@ namespace messaging
 			/*jump behind command that has already been stored*/
 			begin_pos = str.find_first_of(' ') + 1;
 
-			/*strip argument TODO support for multiple arguments*/
-			space_pos = str.find_first_of(' ', begin_pos);
-			if(space_pos != std::string::npos)
+			do
 			{
-				this->arguments.push_back(str.substr(begin_pos, space_pos-1) );
+				space_pos = str.find_first_of(' ', begin_pos);
+				this->arguments.push_back(str.substr(begin_pos, space_pos-begin_pos) );
+				begin_pos = space_pos+1;
 			}
+			while(space_pos != std::string::npos);
 		}
 
 		init_replies();
@@ -83,11 +84,11 @@ namespace messaging
 	{
 		if(this->command.compare("who") == 0)
 		{
-			this->who_handle();
+			who_handle();
 		}
 		else if(this->command.compare("unwho") == 0)
 		{
-			this->unwho_handle();
+			unwho_handle();
 		}
 		else if(this->command.compare("lookup") == 0)
 		{
@@ -141,28 +142,64 @@ namespace messaging
 
 	void Command::lookup_handle() const
 	{
-
-	}
-
-	void Command::login_handle() const
-	{
-		if( arguments.size() == 2 )
+		//ask the reader if the argument.at(0) is in the usernames vector
+		if( arguments.size() == 1 )
 		{
-			bool password_correct = reader->check_password_for(this->arguments.at(0), this->arguments.at(1) );
-			if(password_correct)
+			if(reader->user_exists(arguments.at(0) ) )
 			{
-				this->current->set_Login(true);
-				construct_reply(LOGIN_SUCCESS);
+				construct_reply(LOOKUP_SUCCESS, arguments.at(0) );
 			}
 			else
 			{
-				construct_reply(LOGIN_FAILURE);
+				construct_reply(LOOKUP_FAILURE);
 			}
 		}
 		else
 		{
+			construct_reply(LOOKUP_FAILURE);	//TODO check order of replies
+			construct_reply(NOARG);
+		}
+	}
+
+	void Command::login_handle() const
+	{
+		bool login_status = false;
+            
+		if( arguments.size() == 2 )
+		{
+			bool password_correct = reader->check_password(this->arguments.at(0), this->arguments.at(1) );
+			if(password_correct)
+			{
+				this->current->set_Login(true);
+				construct_reply(LOGIN_SUCCESS, arguments.at(0) );
+				login_status = true;
+			}
+			else
+			{
+				construct_reply(LOGIN_FAILURE);
+				login_status = false;
+			}
+		}
+		else
+		{
+			//TODO check the order of sending these two commands (depends a little on implementation in the client)
 			construct_reply(LOGIN_FAILURE);
 			construct_reply(NOARG);
+			login_status = false;
+		}
+		
+		if(login_status == true)
+		{
+			/*read messages from temporary storage and send them to current*/
+			reader->set_receiver(arguments.at(0) );
+			//reader: get filelist
+			//for each file:
+				//reader: switch to receiver dir
+				//reader: read all messages from one file into vector or array (each line one object)
+				//this: for each object of vector
+					//current: send message to
+				//reader: switch to ../
+			//move to next
 		}
 	}
 
@@ -176,14 +213,25 @@ namespace messaging
 		construct_reply(ERROR);
 	}
 
-	void Command::construct_reply(reply indic) const
+	/*construct a reply to send back to the commanding client
+	 * data is used for the LOOKUP_SUCCESS reply: it is the username of the user that was found*/
+	void Command::construct_reply(reply const indic, std::string const data) const
 	{
 		char * indicator_c = static_cast<char *>(calloc(1, sizeof(char) ) );
 		indicator_c[0] = indic;
 		std::string const indicator = indicator_c;
 
-		/*set up the message TODO check that it has the right length*/
-		std::string const str = indicator + replies.at(indic-32);
+		std::string str;
+		//TODO check that the messages have the right length
+		if(data == "")
+		{
+			str = indicator + replies.at(indic-32);
+		}
+		//for LOGIN_SUCCESS and LOOKUP_SUCCESS a username is sent back (string data)
+		else
+		{
+			str = indicator + data + " " + replies.at(indic-32);
+		}
 
 		/*send the message*/
 		current->Send(str);

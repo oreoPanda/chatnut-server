@@ -32,7 +32,7 @@ namespace messaging
 		LOOKUP_SUCCESS,
 		LOOKUP_FAILURE,
 		MESSAGE,
-		NOARG,
+		NOARG,		//TODO could use a TOO_MANY_ARGS or WRONG_NUM_OF_ARGS instead bzw. as well
 		NOMEM,
 		ERROR,
 		COUNT
@@ -62,7 +62,7 @@ namespace messaging
 		void login_handle() const;
 		void logout_handle() const;
 		void unknown_handle() const;
-		void construct_reply(reply indicator) const;
+		void construct_reply(reply const indic, std::string const data = "") const;
 	};
 
 	class Message

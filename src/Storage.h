@@ -37,17 +37,20 @@ namespace fileio
 	public:
 		StorageReader(std::ostream * const err);
 		~StorageReader();
-		void init_directory_structure();
 		bool init_success() const;
 		void load_all_users();
+		bool user_exists(std::string const & user) const;
+		std::vector<std::string> get_file_list();
 		std::string get_message() const;
-		bool check_password_for(std::string const & username, std::string const & password) const;
+		bool check_password(std::string const & username, std::string const & password) const;
 		bool read();
 	private:
 		std::ifstream file;
 		bool dir_is_init;
 		std::vector<std::string> usernames;
 		std::vector<std::string> passwords;
+                
+                void init_directory_structure();
 	};
 
 	class StorageWriter: public Storage
