@@ -11,9 +11,13 @@ namespace messaging
 {
 
 	Message::Message(std::string const & str, networking::Client * const cur)
-	:message(str), sender(cur)
+	:message(""), sender(cur)
 	{
-
+		/*construct message*/
+		char * const indicator_c = static_cast<char * const>(calloc(1, sizeof(char) ) );
+		indicator_c[0] = MESSAGE;
+		std::string const indicator = indicator_c;
+		message = indicator + str + '\n';
 	}
 
 	Message::~Message()

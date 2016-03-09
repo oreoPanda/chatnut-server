@@ -155,10 +155,14 @@ namespace networking
 	void Client::clear_buddylist()
 	{
 		std::list<Buddy>::iterator buddylistiter = buddylist.begin();
-		/*communicate to others that this no longer has buddies*/
+		/*communicate to online buddies that this no longer has buddies*/
 		while(buddylistiter != buddylist.end() )
 		{
-			buddylistiter->get_client()->remove_from_reversebuddylist(buddylistiter->get_iter() );
+			if(buddylistiter->get_client() )
+			{
+				//only try to tell buddy if buddy is online ;)
+				buddylistiter->get_client()->remove_from_reversebuddylist(buddylistiter->get_iter() );
+			}
 			buddylistiter++;
 		}
 

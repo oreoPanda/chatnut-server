@@ -89,10 +89,7 @@ int main(void)
 						/*Send the client the Connected reply along with a short message*/
 						Command welcome_cmd(current->Next(), logger);
 					}
-
-					/*Send the client the Connected reply along with a short message*/
-					Command welcome_cmd(current, logger);
-				}
+				}//end connection accepted
 			}//end horst.check_incoming()
 
 			/*Check if the current client sent any messages or commands*/

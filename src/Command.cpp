@@ -223,7 +223,7 @@ namespace messaging
 	 * data is used for the LOOKUP_SUCCESS reply: it is the username of the user that was found*/
 	void Command::construct_reply(reply const indic, std::string const data) const
 	{
-		char * indicator_c = static_cast<char *>(calloc(1, sizeof(char) ) );
+		char * const indicator_c = static_cast<char * const>(calloc(1, sizeof(char) ) );
 		indicator_c[0] = indic;
 		std::string const indicator = indicator_c;
 
