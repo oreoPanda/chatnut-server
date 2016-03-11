@@ -23,7 +23,8 @@ namespace fileio
 	{
 	public:
 		Storage(fileio::LogWriter & logger, std::string const & home);
-		virtual ~Storage();
+		~Storage();
+
 		void set_receiver(std::string const & rcv);
 		void set_sender(std::string const & snd);
 	protected:
@@ -38,10 +39,9 @@ namespace fileio
 	{
 	public:
 		StorageReader(fileio::LogWriter & logger, std::string const & home);
-		~StorageReader();
+		virtual ~StorageReader();	//has to be virtual, so that Userlist destructor is called too
+
 		bool init_success() const;
-		void load_all_users();
-		bool user_exists(std::string const & user) const;
 		std::vector<std::string> get_file_list();
 		std::string get_message() const;
 		bool check_password(std::string const & username, std::string const & password) const;
@@ -60,6 +60,7 @@ namespace fileio
 	public:
 		StorageWriter(fileio::LogWriter & logger, std::string const & home);
 		~StorageWriter();
+
 		void set_message(std::string const & msg);
 		bool write();
 	private:
