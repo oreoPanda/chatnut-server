@@ -289,6 +289,11 @@ namespace networking
 		this->name = n;
 	}
 
+	std::string Client::get_Name() const
+	{
+		return this->name;
+	}
+
 	std::list<Buddy>::iterator const Client::add_buddy(std::string const & name)
 	{
 		Buddy temp;
