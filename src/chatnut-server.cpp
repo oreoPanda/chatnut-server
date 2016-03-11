@@ -49,10 +49,10 @@ int main(void)
 {
 	Client * current = NULL;
 	LogWriter logger(std::cerr, std::clog);
-	StorageReader reader(logger, getenv("HOME") );
+	Storage storage(getenv("HOME"), logger);
 
 	/*only go on if directory initialization was successful*/
-	if(reader.init_success() == false)
+	if(storage.init_success() == false)
 	{
 		return 1;
 	}
@@ -115,8 +115,8 @@ int main(void)
 						}
 						else
 						{
-							Message message(msg, current);
-							message.send();
+							Message message(msg, current, logger);
+							message.send_or_store();
 						}
 					}
 				}

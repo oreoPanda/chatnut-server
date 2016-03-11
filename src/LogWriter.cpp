@@ -25,7 +25,7 @@ namespace fileio
 
 	void LogWriter::error(std::string const & object, std::string const & msg) const
 	{
-		error_stream << "[" + object + "]" + " error: " + msg << std::endl;
+		error_stream << "[" + object + "]" + " error: " + msg + "." << std::endl;
 	}
 
 	/*write an error to the specified error stream*/

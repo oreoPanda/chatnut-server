@@ -43,7 +43,7 @@ namespace messaging
 	{
 	public:
 		Command(networking::Client * const cur, fileio::LogWriter & logger);
-		Command(std::string const str, networking::Client * const cur, std::forward_list<networking::Action> * actionsptr, fileio::StorageReader * const r, fileio::LogWriter & logger);
+		Command(std::string const str, networking::Client * const cur, std::forward_list<networking::Action> * actionsptr,fileio::StorageReader * const r,  fileio::LogWriter & logger);
 		virtual ~Command();
 		bool isCommand() const;
 		void evaluate() const;
@@ -70,12 +70,13 @@ namespace messaging
 	class Message
 	{
 	public:
-		Message(std::string const & str, networking::Client * const cur);
+		Message(std::string const & str, networking::Client * const cur, fileio::LogWriter const & logger);
 		virtual ~Message();
-		void send() const;
+		void send_or_store() const;
 	private:
-                std::string message;
-                networking::Client * const sender;
+		std::string message;
+		networking::Client * const sender;
+		fileio::LogWriter logger;
 	};
 
 } /* namespace messaging */
