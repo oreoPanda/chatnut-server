@@ -59,6 +59,17 @@ namespace fileio
 		return this->dir_is_init;
 	}
 
+	StorageReader::StorageReader(std::string const & rcv, fileio::LogWriter & logger)
+	:receiver(rcv), logger(logger)
+	{
+
+	}
+
+	StorageReader::~StorageReader()
+	{
+
+	}
+
 	/*returns a vector of the filenames inside the receiver's directory*/
 	std::vector<std::string> StorageReader::get_file_list()
 	{
@@ -88,7 +99,7 @@ namespace fileio
 	 * warning: vector messages is cleared before usage and all previously stored content will be gone*/
 	bool StorageReader::read_messages(std::string const & from, std::vector<std::string> & messages)
 	{
-		file.open( receiver.c_str() + "/" + from.c_str() );
+		file.open( (receiver + "/" + from).c_str() );
 		if(file.is_open() )
 		{
 			/*clear the messages vector of any useless stuff*/
@@ -109,7 +120,9 @@ namespace fileio
 												//is useless. if it happens after last line, the if-statement is okay
 				if(!message.empty() )
 				{
-					messages.push_back(message);
+					/*prepend the sender's name to the read message and store it*/
+					std::string complete_message = from + " " + message;	//TODO check
+					messages.push_back(complete_message);
 				}
 			}
 			file.close();
@@ -127,7 +140,7 @@ namespace fileio
 		}
 	}
 
-	StorageWriter::StorageWriter(std::string const & rcv, std::string const & snd, std::string const & msg, fileio::LogWriter const & logger)
+	StorageWriter::StorageWriter(std::string const & rcv, std::string const & snd, std::string const & msg, fileio::LogWriter & logger)
 	:receiver(rcv), sender(snd), message(msg), logger(logger)
 	{}
 

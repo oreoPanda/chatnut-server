@@ -10,7 +10,8 @@
 namespace fileio
 {
 
-	Userlist::Userlist()
+	Userlist::Userlist(fileio::LogWriter & logger)
+	:logger(logger)
 	{
 		/*load userlist*/
 		load_all_users();
@@ -31,6 +32,7 @@ namespace fileio
 		if(file.is_open() )
 		{
 			/*read usernames and passwords from file and store them in the specified vectors*/
+			/*TODO make more efficient by reading file as a whole and then separating*/
 			while(file.good() )
 			{
 				//username
@@ -58,22 +60,25 @@ namespace fileio
 			{
 				if(file.bad() )
 				{
-					//TODO I/O error
+					this->logger.error("Userlist", "Unable to load userlist due to an I/O error", errno);
 				}
 				else		//just failbit
 				{
-					//TODO logical error
+					this->logger.error("Userlist", "Unable to load userlist due to a logical error");
 				}
 			}//end error check
 
 		}//end file is open
 		else
 		{
-			//TODO file couldn't be opened
-			logger.error("Storage Reader", "Unable to open userlist at " + this->home + "/.chatnut-server/users", errno);
+			logger.error("Userlist", "Unable to open userlist", errno);
 		}
 
-		//TODO close file after loading userlist
+		file.close();
+		if(file.is_open() || file.fail() )
+		{
+			logger.error("Userlist", "Unable to close userlist", errno);
+		}
 
 		return;
 	}
@@ -95,6 +100,29 @@ namespace fileio
 		}
 
 		return exists;
+	}
+
+	/*Look up the password to a given username by scanning TODO binary search.*/
+	bool Userlist::check_password(std::string const & username, std::string const & password) const
+	{
+		bool password_true = false;
+
+		if(!username.empty() )
+		{
+			for(unsigned int i = 0; i < this->usernames.size(); i++)
+			{
+				if(this->usernames.at(i).compare(username) == 0)
+				{
+					if(this->passwords.at(i).compare(password) == 0)
+					{
+						password_true = true;
+					}
+					break;
+				}
+			}
+		}
+
+		return password_true;
 	}
 
 } /* namespace fileio */

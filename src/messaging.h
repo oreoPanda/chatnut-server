@@ -14,6 +14,7 @@
 #include "LogWriter.h"
 #include "networking.h"
 #include "Storage.h"
+#include "Userlist.h"
 
 namespace messaging
 {
@@ -42,9 +43,10 @@ namespace messaging
 	class Command
 	{
 	public:
-		Command(networking::Client * const cur, fileio::LogWriter & logger);
-		Command(std::string const str, networking::Client * const cur, std::forward_list<networking::Action> * actionsptr,fileio::StorageReader * const r,  fileio::LogWriter & logger);
-		virtual ~Command();
+		Command(networking::Client * const cur, fileio::Userlist & list, fileio::LogWriter & logger);
+		Command(std::string const str, networking::Client * const cur, std::forward_list<networking::Action> * actionsptr, fileio::Userlist & list, fileio::LogWriter & logger);
+		~Command();
+
 		bool isCommand() const;
 		void evaluate() const;
 	private:
@@ -54,8 +56,9 @@ namespace messaging
 		std::string const command;
 		std::vector<std::string> arguments;	//TODO maybe change to array, maybe const?
 		std::forward_list<networking::Action> * actionlist;
-		fileio::StorageReader * const reader;
+		fileio::Userlist & userlist;
 		fileio::LogWriter & logger;
+
 		void init_replies();
 		void connected_handle() const;
 		void who_handle() const;
@@ -70,13 +73,13 @@ namespace messaging
 	class Message
 	{
 	public:
-		Message(std::string const & str, networking::Client * const cur, fileio::LogWriter const & logger);
+		Message(std::string const & str, networking::Client * const cur, fileio::LogWriter & logger);
 		virtual ~Message();
 		void send_or_store() const;
 	private:
 		std::string message;
 		networking::Client * const sender;
-		fileio::LogWriter logger;
+		fileio::LogWriter & logger;
 	};
 
 } /* namespace messaging */

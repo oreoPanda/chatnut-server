@@ -12,6 +12,7 @@
 #include "messaging.h"
 #include "networking.h"
 #include "Storage.h"
+#include "Userlist.h"
 
 using namespace fileio;
 using namespace messaging;
@@ -50,6 +51,7 @@ int main(void)
 	Client * current = NULL;
 	LogWriter logger(std::cerr, std::clog);
 	Storage storage(getenv("HOME"), logger);
+	Userlist userlist(logger);
 
 	/*only go on if directory initialization was successful*/
 	if(storage.init_success() == false)
@@ -80,14 +82,14 @@ int main(void)
 					{
 						current = new Client(client_sock, addr, NULL, &logger);
 						/*Send the client the Connected reply along with a short message*/
-						Command welcome_cmd(current, logger);
+						Command welcome_cmd(current, userlist, logger);
 					}
 					/*Add client behind current*/
 					else
 					{
 						new Client(client_sock, addr, current, &logger);
 						/*Send the client the Connected reply along with a short message*/
-						Command welcome_cmd(current->Next(), logger);
+						Command welcome_cmd(current->Next(), userlist, logger);
 					}
 				}//end connection accepted
 			}//end horst.check_incoming()
@@ -108,7 +110,7 @@ int main(void)
 					std::string msg;
 					if( current->get_message(msg) )
 					{
-						Command cmd(msg, current, &actions, &reader, logger);
+						Command cmd(msg, current, &actions, userlist, logger);
 						if(cmd.isCommand() )
 						{
 							cmd.evaluate();

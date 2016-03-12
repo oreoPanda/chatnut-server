@@ -10,7 +10,7 @@
 namespace messaging
 {
 
-	Message::Message(std::string const & str, networking::Client * const cur, fileio::LogWriter const & logger)
+	Message::Message(std::string const & str, networking::Client * const cur, fileio::LogWriter & logger)
 	:message(""), sender(cur), logger(logger)
 	{
 		/*construct message*/
@@ -47,7 +47,7 @@ namespace messaging
 				pure_message = this->message.substr(begin);
 
 				/*create a StorageWriter object and store the message on disk*/
-				fileio::StorageWriter store(buddyiter->get_client()->get_Name(), this->sender->get_Name(), pure_message, logger);
+				fileio::StorageWriter store(buddyiter->get_client()->get_Name(), this->sender->get_Name(), pure_message, this->logger);
 				store.write();
 			}
 			this->sender->advance_buddy_iter(buddyiter);

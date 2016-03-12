@@ -10,16 +10,16 @@
 namespace messaging
 {
 
-        /*this Constructor is only used when a new client connects, to send the Connected message TODO move to message class*/
-	Command::Command(networking::Client * const cur, fileio::LogWriter & logger)
-	:iscmd(false), current(cur), command(""), actionlist(NULL), reader(NULL), logger(logger)
+	/*this Constructor is only used when a new client connects, to send the Connected message TODO move to message class*/
+	Command::Command(networking::Client * const cur, fileio::Userlist & list, fileio::LogWriter & logger)
+	:iscmd(false), current(cur), command(""), actionlist(NULL), userlist(list), logger(logger)
 	{
 		this->replies.push_back("Connected\n");
 		connected_handle();
 	}
 
-	Command::Command(std::string const str, networking::Client * const cur, std::forward_list<networking::Action> *actionsptr, fileio::StorageReader * const r, fileio::LogWriter & logger)
-	:iscmd( str[0] == '/' ? true:false ), current(cur), command(str.substr(1,str.find_first_of(' ')-1) ), actionlist(actionsptr), reader(r), logger(logger)
+	Command::Command(std::string const str, networking::Client * const cur, std::forward_list<networking::Action> *actionsptr, fileio::Userlist & list, fileio::LogWriter & logger)
+	:iscmd( str[0] == '/' ? true:false ), current(cur), command(str.substr(1,str.find_first_of(' ')-1) ), actionlist(actionsptr), userlist(list), logger(logger)
 	{
 		if(this->iscmd)
 		{
@@ -147,7 +147,7 @@ namespace messaging
 		//ask the reader if the argument.at(0) is in the usernames vector
 		if( arguments.size() == 1 )
 		{
-			if(reader->user_exists(arguments.at(0) ) )
+			if(this->userlist.user_exists(arguments.at(0) ) )
 			{
 				construct_reply(LOOKUP_SUCCESS, arguments.at(0) );
 			}
@@ -169,7 +169,7 @@ namespace messaging
             
 		if( arguments.size() == 2 )
 		{
-			bool password_correct = reader->check_password(this->arguments.at(0), this->arguments.at(1) );
+			bool password_correct = userlist.check_password(this->arguments.at(0), this->arguments.at(1) );
 			if(password_correct)
 			{
 				this->current->set_Login(true);
@@ -185,7 +185,7 @@ namespace messaging
 				logger.error("Login handler", "Couldn't log in user" + arguments.at(0) );
 			}
 		}
-		else
+		else	//wrong number of arguments
 		{
 			//TODO check the order of sending these two commands (depends a little on implementation in the client)
 			construct_reply(LOGIN_FAILURE);
@@ -197,15 +197,26 @@ namespace messaging
 		if(login_status == true)
 		{
 			/*read messages from temporary storage and send them to current*/
-			reader->set_receiver(arguments.at(0) );
-			//reader: get filelist
-			//for each file:
-				//reader: switch to receiver dir
-				//reader: read all messages from one file into vector or array (each line one object)
-				//this: for each object of vector
-					//current: send message to
-				//reader: switch to ../
-			//move to next
+			fileio::StorageReader reader(this->arguments.at(0), this->logger);
+			std::vector<std::string> filelist = reader.get_file_list();
+			std::vector<std::vector<std::string>> messages;
+
+			for(unsigned int i = 0; i < filelist.size(); i++)
+			{
+				/*read one file worth of messages into a vector, then push it to the end of vector messages*/
+				std::vector<std::string> messages_from_one_file;
+				reader.read_messages(filelist.at(i), messages_from_one_file);
+				messages.push_back(messages_from_one_file);
+			}
+
+			/*send all messages to the receiver*/
+			for(unsigned int listi = 0; listi < messages.size(); listi++)	//listi is index to the vector of vector of string
+			{
+				for(unsigned int messagei = 0; messagei < messages.at(listi).size(); messagei++)	//messagei is index to vector of string inside the vector of vector of string
+				{
+					this->current->Send(messages.at(listi).at(messagei) );	//whoa that looks complicated :D - but no gcc errors on first try! yeah!
+				}
+			}
 		}
 	}
 

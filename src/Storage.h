@@ -38,18 +38,15 @@ namespace fileio
 	class StorageReader
 	{
 	public:
-		StorageReader(fileio::LogWriter & logger, std::string const & home);
-		virtual ~StorageReader();	//has to be virtual, so that Userlist destructor is called too
+		StorageReader(std::string const & rcv, fileio::LogWriter & logger);
+		~StorageReader();
 
 		std::vector<std::string> get_file_list();
 		bool read_messages(std::string const & from, std::vector<std::string> & messages);
-		bool read();
 	private:
 		std::string receiver;
-		std::ifstream file;
-		fileio::LogWriter logger;
-		std::vector<std::string> usernames;	//TODO to a class LoginReader or UserlistReader
-		std::vector<std::string> passwords;	//TODO to a class LoginReader
+		std::ifstream file;		//TODO initialize in constructor?
+		fileio::LogWriter & logger;
 		/*TODO check which constructors and destructors are called in inherited classes*/
 	};
 
@@ -66,7 +63,7 @@ namespace fileio
 	class StorageWriter
 	{
 	public:
-		StorageWriter(std::string const & rcv, std::string const & snd, std::string const & msg, fileio::LogWriter const & logger);
+		StorageWriter(std::string const & rcv, std::string const & snd, std::string const & msg, fileio::LogWriter & logger);
 		~StorageWriter();
 
 		void write();
@@ -75,7 +72,7 @@ namespace fileio
 		std::string sender;
 		std::string message;
 		std::ofstream file;
-		fileio::LogWriter logger;
+		fileio::LogWriter & logger;
 	};
 
 } /* namespace fileio */
