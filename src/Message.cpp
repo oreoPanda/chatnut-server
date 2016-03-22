@@ -25,29 +25,31 @@ namespace messaging
 
 	}
 
-        /*sends the message to all buddies of the sender*/
+	/*sends the message to all buddies of the sender or stores it on server*/
 	void Message::send_or_store() const
 	{
 		//iterator of the sender's buddylist
 		std::list<networking::Buddy>::iterator buddyiter = this->sender->get_begin_buddy_iter();
 
-		//send the message to each buddy
+		//go through all buddies
 		while(buddyiter != this->sender->get_end_buddy_iter() )
 		{
+			//send message to each buddy
 			if(buddyiter->get_client() )
 			{
-				//send message to buddy
 				buddyiter->get_client()->Send(this->message);
 			}
+			//store the message on server
 			else
 			{
 				/*detach the sender's name from the message so that less disk space is used*/
 				std::string pure_message;
-				int begin = this->message.find_first_of(" ");
-				pure_message = this->message.substr(begin);
+				int begin = this->message.find_first_of(" ") + 1;
+				int end = this->message.find_first_of("\n");
+				pure_message = this->message.substr(begin, end-begin);
 
 				/*create a StorageWriter object and store the message on disk*/
-				fileio::StorageWriter store(buddyiter->get_client()->get_Name(), this->sender->get_Name(), pure_message, this->logger);
+				fileio::StorageWriter store(buddyiter->get_name(), this->sender->get_Name(), pure_message, this->logger);
 				store.write();
 			}
 			this->sender->advance_buddy_iter(buddyiter);

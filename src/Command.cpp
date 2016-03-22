@@ -176,13 +176,13 @@ namespace messaging
 				this->current->set_Name(arguments.at(0) );
 				construct_reply(LOGIN_SUCCESS, arguments.at(0) );
 				login_status = true;
-				logger.log("Login handler", "Logged in user" + arguments.at(0) );
+				logger.log("Login handler", "Logged in user " + arguments.at(0) );
 			}
 			else
 			{
 				construct_reply(LOGIN_FAILURE);
 				login_status = false;
-				logger.error("Login handler", "Couldn't log in user" + arguments.at(0) );
+				logger.error("Login handler", "Couldn't log in user " + arguments.at(0) );
 			}
 		}
 		else	//wrong number of arguments
@@ -191,21 +191,21 @@ namespace messaging
 			construct_reply(LOGIN_FAILURE);
 			construct_reply(NOARG);
 			login_status = false;
-			logger.error("Login handler", "Couldn't log in user" + arguments.at(0) + ": Wrong number of arguments." );
+			logger.error("Login handler", "Couldn't log in user " + arguments.at(0) + ": Wrong number of arguments." );
 		}
 		
 		if(login_status == true)
 		{
+			std::vector<std::vector<std::string>> messages;	//all messages for newly logged-in user will go in here
+
 			/*read messages from temporary storage and send them to current*/
 			fileio::StorageReader reader(this->arguments.at(0), this->logger);
 			std::vector<std::string> filelist = reader.get_file_list();
-			std::vector<std::vector<std::string>> messages;
-
 			for(unsigned int i = 0; i < filelist.size(); i++)
 			{
 				/*read one file worth of messages into a vector, then push it to the end of vector messages*/
 				std::vector<std::string> messages_from_one_file;
-				reader.read_messages(filelist.at(i), messages_from_one_file);
+				reader.read_messages(filelist.at(i), messages_from_one_file, MESSAGE);
 				messages.push_back(messages_from_one_file);
 			}
 
@@ -216,6 +216,12 @@ namespace messaging
 				{
 					this->current->Send(messages.at(listi).at(messagei) );	//whoa that looks complicated :D - but no gcc errors on first try! yeah!
 				}
+			}
+
+			/*remove messages from temporary storage*/
+			if(filelist.size() > 0)
+			{
+				reader.remove_files(filelist);
 			}
 		}
 	}

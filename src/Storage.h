@@ -42,7 +42,8 @@ namespace fileio
 		~StorageReader();
 
 		std::vector<std::string> get_file_list();
-		bool read_messages(std::string const & from, std::vector<std::string> & messages);
+		void remove_files(std::vector<std::string> const & files);
+		bool read_messages(std::string const & from, std::vector<std::string> & messages, char msg_indic);
 	private:
 		std::string receiver;
 		std::ifstream file;		//TODO initialize in constructor?

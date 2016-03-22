@@ -24,8 +24,11 @@ namespace fileio
 
 	void Userlist::load_all_users()
 	{
+		std::string errorindicator = "out";		//to write without :D
 		std::string username;
 		std::string password;
+
+		this->logger.log("Userlist", "Loading userlist..");
 
 		/*open userlist*/
 		file.open("users");
@@ -36,17 +39,18 @@ namespace fileio
 			while(file.good() )
 			{
 				//username
-				getline(file, username);
-				if(!file.good() )
+				std::getline(file, username);
+				if(file.eof() )
 				{
 					break;
 				}
 
 				//password
-				getline(file, password);
-				/*check badbit and failbit, eofbit doesn't matter here*/
-				if(file.fail() )
+				std::getline(file, password);
+				if(file.eof() )
 				{
+					this->logger.error("Userlist", "No password supplied for last user in list");
+					errorindicator = "";
 					break;
 				}
 
@@ -55,29 +59,42 @@ namespace fileio
 				this->passwords.push_back(password);
 			}//end reading file
 
-			/*check whether file.failbit and/or file.badbit are set*/
-			if(!file)
+			/*check for errors*/
+			if(file.bad() )
 			{
-				if(file.bad() )
-				{
-					this->logger.error("Userlist", "Unable to load userlist due to an I/O error", errno);
-				}
-				else		//just failbit
+				this->logger.error("Userlist", "Unable to load userlist due to an I/O error", errno);
+				errorindicator = "";
+			}
+			else if(file.fail() )
+			{
+				if(!file.eof() )
 				{
 					this->logger.error("Userlist", "Unable to load userlist due to a logical error");
+					errorindicator = "";
 				}
-			}//end error check
+			}
+
+			/*clear errors before closing*/
+			file.clear();
+
+			/*close the file*/
+			file.close();
+			/*check for new errors*/
+			if(file.is_open() || file.fail() )
+			{
+				logger.error("Userlist", "Unable to close userlist", errno);
+				errorindicator = "";
+			}
+
+			/*final log message*/
+			this->logger.log("Userlist", "Loaded userlist with" + errorindicator + " errors");
 
 		}//end file is open
-		else
+		else	//file is not open
 		{
 			logger.error("Userlist", "Unable to open userlist", errno);
-		}
-
-		file.close();
-		if(file.is_open() || file.fail() )
-		{
-			logger.error("Userlist", "Unable to close userlist", errno);
+			errorindicator = "";
+			file.clear();	//set goodbit because failbit was set on opening failure
 		}
 
 		return;

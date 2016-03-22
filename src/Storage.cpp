@@ -81,25 +81,50 @@ namespace fileio
 
 		if( (dir = opendir(receiver.c_str() )) != NULL)
 		{
+			//get direcory contents one by one
 			while( (direntry = readdir(dir)) != NULL)
 			{
-				filelist.push_back(direntry->d_name);
+				//leave out . and .. entries TODO leave out all other directories, too, just use files
+				if(strcmp(direntry->d_name, ".") != 0 && strcmp(direntry->d_name, "..") != 0)
+				{
+					filelist.push_back(direntry->d_name);
+				}
 			}
+			logger.log("Storage Reader", "There are some messages waiting to be sent to " + this->receiver);
 		}
 		else
 		{
-			logger.error("Storage Writer", "Unable to open subdirectory " + this->receiver, errno);
+			logger.log("Storage Reader", "There are no messages waiting to be sent to " + this->receiver);
 		}
 
 		return filelist;
 	}
 
+	/*Remove files that contain messages for receiver
+	 * TODO check if remove sets errno*/
+	void StorageReader::remove_files(std::vector<std::string> const & files)
+	{
+		for(unsigned int i = 0; i < files.size(); i++)
+		{
+			if(remove( (this->receiver + '/' + files.at(i) ).c_str() ) != 0)
+			{
+				logger.error("Storage Reader", "Unable to remove file with messages from " + files.at(i) + " to " + this->receiver, errno);
+			}
+		}
+
+		/*remove the directory*/
+		if(rmdir(this->receiver.c_str()) != 0 )
+		{
+			logger.error("Storage Reader", "Unable to remove directory that contained messages for " + this->receiver, errno);
+		}
+	}
+
 	/*reads all messages from a given user and stores them in the given messages vector
 	 * returns true on success and false on failure
 	 * warning: vector messages is cleared before usage and all previously stored content will be gone*/
-	bool StorageReader::read_messages(std::string const & from, std::vector<std::string> & messages)
+	bool StorageReader::read_messages(std::string const & from, std::vector<std::string> & messages, char msg_indic)
 	{
-		file.open( (receiver + "/" + from).c_str() );
+		file.open( (this->receiver + "/" + from).c_str() );
 		if(file.is_open() )
 		{
 			/*clear the messages vector of any useless stuff*/
@@ -110,21 +135,23 @@ namespace fileio
 			}
 			messages.clear();
 
-			while(file.good() )
+			do
 			{
 				/*read one line from file and store it in the vector*/
 				/*TODO increase efficiency by reading the whole file and then separating the messages. TODO do this
 				 * in load_user_list() as well.*/
 				std::string message;
-				getline(file, message);	//TODO check when eof happens: if it happens in the last line, the following if-statement
-												//is useless. if it happens after last line, the if-statement is okay
-				if(!message.empty() )
+				if(getline(file, message) )
 				{
 					/*prepend the sender's name to the read message and store it*/
-					std::string complete_message = from + " " + message;	//TODO check
+					std::string complete_message = msg_indic + from + ' ' + message + '\n';
 					messages.push_back(complete_message);
 				}
 			}
+			while(file);
+
+			file.clear();
+
 			file.close();
 			if(file.is_open() || file.fail() )	//TODO check which ones to check
 			{
@@ -166,30 +193,28 @@ namespace fileio
 				return;
 			}
 		}
-		else	//directory was created or already exists
-		{
-			/*open the file and write the message to it*/
-			file.open( (receiver + sender).c_str() );
-			if(file.is_open() )
-			{
-				file << message << std::endl;
-				if(file.bad() )
-				{
-					logger.error("Storage Writer", "Unable to write message to " + this->receiver + "/" + this->sender);
-				}
 
-				/*close the file again*/
-				file.close();
-				if(file.is_open() || file.fail() )	//TODO check which one to use
-				{
-					logger.error("Storage Writer", "Unable to close file " + this->receiver + "/" + this->sender, errno);
-				}
-			}//end file is open
-			else
+		/*if the function reaches this point, directory was created or exists, so open the file and write the message to it*/
+		file.open( (receiver + "/" + sender).c_str(), std::ios::app);
+		if(file.is_open() )
+		{
+			file << message << std::endl;
+			if(file.bad() )
 			{
-				logger.error("Storage Writer", "Unable to open file " + this->receiver + "/" + this->sender, errno);
+				logger.error("Storage Writer", "Unable to write message to " + this->receiver + "/" + this->sender);
 			}
-		}//end else (directory was created)
+
+			/*close the file again*/
+			file.close();
+			if(file.is_open() || file.fail() )	//TODO check which one to use
+			{
+				logger.error("Storage Writer", "Unable to close file " + this->receiver + "/" + this->sender, errno);
+			}
+		}//end file is open
+		else
+		{
+			logger.error("Storage Writer", "Unable to open file " + this->receiver + "/" + this->sender, errno);
+		}
 
 		return;
 	}
