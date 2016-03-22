@@ -36,7 +36,7 @@ namespace fileio
 
 	void LogWriter::log(std::string const & object, std::string const & msg) const
 	{
-		log_stream << "[" + object + "]" + msg + "." << std::endl;
+		log_stream << "[" + object + "] " + msg + "." << std::endl;
 	}
 
 } /* namespace messaging */

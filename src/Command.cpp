@@ -182,7 +182,7 @@ namespace messaging
 			{
 				construct_reply(LOGIN_FAILURE);
 				login_status = false;
-				logger.error("Login handler", "Couldn't log in user " + arguments.at(0) );
+				logger.error("Login handler", "Unable to log in user " + arguments.at(0) );
 			}
 		}
 		else	//wrong number of arguments
@@ -191,7 +191,7 @@ namespace messaging
 			construct_reply(LOGIN_FAILURE);
 			construct_reply(NOARG);
 			login_status = false;
-			logger.error("Login handler", "Couldn't log in user " + arguments.at(0) + ": Wrong number of arguments." );
+			logger.error("Login handler", "Unable to log in user " + arguments.at(0) + ": Wrong number of arguments." );
 		}
 		
 		if(login_status == true)
