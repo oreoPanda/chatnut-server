@@ -67,8 +67,8 @@ namespace messaging
 		this->replies.push_back("Registration unsuccessful. Please try again.\n");
 		this->replies.push_back("User found.\n");
 		this->replies.push_back("That user doesn't exist. Please try again.\n");
-		this->replies.push_back("");
-		this->replies.push_back("This command requires an argument.\n");		//placeholder, MESSAGE gets its own message string each time
+		this->replies.push_back("");			//placeholder, MESSAGE gets its own message string each time
+		this->replies.push_back("This command requires an argument.\n");
 		this->replies.push_back("The server doesn't have enough memory left for the requested operation.\n");
 		this->replies.push_back("That command doesn't exist. Try `/help`\n.");
 
