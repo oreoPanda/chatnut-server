@@ -31,7 +31,7 @@ namespace networking
         class Action;
         class Buddy;
 
-	class Horst //Beckmann     //TODO this could potentially be hazardous
+	class Horst
 	{
 	public:
 		Horst(unsigned short port, int max, fileio::LogWriter & logger);
