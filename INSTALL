@@ -1,0 +1,22 @@
+Installation Instructions
+
+To get started, you have to compile chatnut-server. For compiling, 
+you need to have make and gcc with C++ support installed.
+
+Run the command
+
+make
+
+in this directory to build chatnut-server. Next, run the command
+
+make install
+
+to install chatnut-server. This will copy the executable file to 
+/usr/local/bin. Optionally, you can run the command
+
+make clean
+
+to remove all object files and the executable from the src folder.
+
+Feel free to contact the developer with any questions concerning 
+the compilation or installation of chatnut-server.
