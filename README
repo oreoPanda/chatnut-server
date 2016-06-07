@@ -1,0 +1,35 @@
+README first
+
+[Description]
+chatnut-server is a messaging server for chatnut. chatnut clients 
+can connect to it, log in and send or receive messages.
+
+[Usage]
+After installation, the command chatnut-server should launch the 
+application. It can be quit by pressing q. chatnut-server will 
+create the directory .chatnut-server in your home directory. In 
+this directory you should place a file called users. This is where 
+all registered users have to be entered manually. The format is 
+simple, the first line contains the username of the first user, 
+the second line contains its password. The third line contains 
+the username of the third user, and so on. The following example 
+file defines two users, jonas and spencer. User jonas has password 
+pw123 and user spencer has password pw456.
+
+[Example users file]
+jonas
+pw123
+spencer
+pw456
+
+[Licensing information]
+chatnut-server is licensed under version 3 of the GNU General Public 
+License. The file COPYING contains a copy of the License.
+
+For installation instructions see the INSTALL file.
+
+For information on changes to chatnut-server see the ChangeLog file.
+
+For information on the latest release see the NEWS file.
+
+For information on the authors and how to contact them see the AUTHORS file.
