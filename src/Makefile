@@ -22,6 +22,14 @@ chatnut-server-debug: $(objects-debug)
 	echo "Compiling "$<" with debugging information"
 	$(compiler) -c $< -o $@ $(cflags) -g
 
+install:
+	echo "Installing chatnut-server"
+	cp chatnut-server /usr/local/bin
+
+uninstall:
+	echo "Uninstalling chatnut-server"
+	rm /usr/local/bin/chatnut-server
+
 clean:
 	echo "Removing executable"
 	rm -f chatnut-server

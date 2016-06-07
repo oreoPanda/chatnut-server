@@ -9,6 +9,12 @@ default:
 debug:
 	cd src && make --quiet chatnut-server-debug
 
+install:
+	cd src && make --quiet install
+
+uninstall:
+	cd src && make --quiet uninstall
+
 clean:
 	rm -f *~
 	rm -f .*~
