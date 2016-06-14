@@ -22,7 +22,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 //C++ include directives
 #include <fstream>
-#include <vector>
+#include <list>
 
 //C include directives
 #include <errno.h>
@@ -43,6 +43,12 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 namespace fileio
 {
 
+	struct user
+	{
+		std::string username;
+		std::string password;
+	};
+
 	class Userlist
 	{
 	public:
@@ -50,12 +56,14 @@ namespace fileio
 		~Userlist();	//doesn't need to be virtual, Userlist won't be further inherited
 
 		void load_all_users();
-		bool user_exists(std::string const & user) const;
-		bool check_password(std::string const & username, std::string const & password) const;
+		int find_user(std::string const & user, std::list<std::string[2]>::iterator & i);
+		bool user_exists(std::string const & username);
+		bool check_password(std::string const & username, std::string const & password);
+		bool register_new_user(std::string const & username, std::string const & password);
 	private:
-		std::vector<std::string> usernames;
-		std::vector<std::string> passwords;
+		std::list<std::string[2]> users;
 		std::ifstream file;		//TODO initialize in constructor?
+		std::ofstream ofile;
 		fileio::LogWriter & logger;
 	};
 
