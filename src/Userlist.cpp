@@ -113,8 +113,7 @@ namespace fileio
 
 	/*uses binary search to look up a user from the userlist
 	 * if user exists, its position is returned and i is set to that position.
-	 * if user doesn't exist, the position behind which the user could be added is the negative return value. i is set to that position.*/
-	//TODO check that if user is a user that could be added to the end of list, i should be one less than users.end() when function returns
+	 * if user doesn't exist, the position in front of which the user could be added is the negative return value. i is set to that position.*/
 	int Userlist::find_user(std::string const & user, std::list<std::string[2]>::iterator & iter)
 	{
 		int center;
@@ -162,7 +161,24 @@ namespace fileio
 			}
 		}
 
-		return -center;		//the user doesn't exist but can be added behind center
+		//min is the position in front of which the user could be added, set iter to that position
+		if(iterpos > min)
+		{
+			for(int i = 0; i < iterpos-min; i++)
+			{
+				iter--;
+			}
+		}
+		else if(iterpos < min)
+		{
+			for(int i = 0; i < min-iterpos; i++)
+			{
+				iter++;
+			}
+		}
+		iterpos = min;
+
+		return -iterpos;		//the user doesn't exist but can be added in front of iter
 	}
 
 	/*check if a user exists
@@ -210,10 +226,10 @@ namespace fileio
 	{
 		std::list<std::string[2]>::iterator i;
 		int pos = -find_user(username, i);
-		if(pos > 0)
+		if(pos >= 0)
 		{
 			std::string userdata[2] = {username, password};
-			users.insert(++i, userdata);
+			users.insert(i, userdata);
 
 			/*write all users to file*/
 			std::string errorindicator = "out";		//to write without :D
@@ -222,7 +238,7 @@ namespace fileio
 
 			/*open userlist*/
 			ofile.open("users");
-			if(file.is_open() )
+			if(ofile.is_open() )
 			{
 				/*write all users into one string called data*/
 				std::string data;
@@ -240,24 +256,24 @@ namespace fileio
 				ofile << data;
 
 				/*check for errors*/
-				if(file.bad() )
+				if(ofile.bad() )
 				{
 					this->logger.error("Userlist", "Unable to rewrite userlist due to an I/O error", errno);
 					errorindicator = "";
 				}
-				else if(file.fail() )
+				else if(ofile.fail() )
 				{
 					this->logger.error("Userlist", "Unable to rewrite userlist due to a logical error");
 					errorindicator = "";
 				}
 
 				/*clear errors before closing*/
-				file.clear();
+				ofile.clear();
 
 				/*close the file*/
-				file.close();
+				ofile.close();
 				/*check for new errors*/
-				if(file.is_open() || file.fail() )
+				if(ofile.is_open() || ofile.fail() )
 				{
 					logger.error("Userlist", "Unable to close userlist", errno);
 					errorindicator = "";
@@ -272,7 +288,7 @@ namespace fileio
 			else	//file is not open
 			{
 				logger.error("Userlist", "Unable to open userlist", errno);
-				file.clear();	//set goodbit because failbit was set on opening failure
+				ofile.clear();	//set goodbit because failbit was set on opening failure
 
 				return false;		//didn't register new user
 			}
