@@ -106,6 +106,10 @@ namespace messaging
 		{
 			lookup_handle();
 		}
+		else if(this->command.compare("register") == 0)
+		{
+			registration_handle();
+		}
 		else if(this->command.compare("login") == 0)
 		{
 			login_handle();
@@ -171,6 +175,26 @@ namespace messaging
 		else
 		{
 			construct_reply(LOOKUP_FAILURE);	//TODO check order of replies
+			construct_reply(NOARG);
+		}
+	}
+
+	void Command::registration_handle() const
+	{
+		if(arguments.size() == 2)
+		{
+			if(this->userlist.register_new_user(arguments.at(0), arguments.at(1)) )
+			{
+				construct_reply(REGISTRATION_SUCCESS);
+			}
+			else
+			{
+				construct_reply(REGISTRATION_FAILURE);
+			}
+		}
+		else
+		{
+			construct_reply(REGISTRATION_FAILURE);	//TODO check order of replies
 			construct_reply(NOARG);
 		}
 	}

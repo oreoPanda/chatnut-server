@@ -76,6 +76,7 @@ namespace messaging
 		void who_handle() const;
 		void unwho_handle() const;
 		void lookup_handle() const;
+		void registration_handle() const;
 		void login_handle() const;
 		void logout_handle() const;
 		void unknown_handle() const;
